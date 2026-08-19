@@ -5,6 +5,7 @@ from __future__ import annotations
 import ctypes
 import sys
 import threading
+import time
 import webbrowser
 from pathlib import Path
 from tkinter import filedialog, font as tkfont, messagebox
@@ -16,9 +17,10 @@ import roblox_fonts as rf
 import roblox_headless as rh
 import roblox_korblox as rk
 import roblox_mods as rm
+import roblox_plugins as rp
 import roblox_stretch as rst
 
-VERSION = "1.0.7"
+VERSION = "1.1.0"
 FR_PRIVATE = 0x10
 
 BG = "#1a1a1a"
@@ -267,6 +269,13 @@ class App(ctk.CTk):
         self.use_sky_var = ctk.BooleanVar(value=bool(cfg.get("use_custom_sky", False)))
         self.use_shift_var = ctk.BooleanVar(value=bool(cfg.get("use_shift_lock", False)))
         self.use_korblox_var = ctk.BooleanVar(value=bool(cfg.get("use_korblox", False)))
+        self.use_stretch_var = ctk.BooleanVar(value=bool(cfg.get("use_stretch", False)))
+        self.stretch_preset_var = ctk.StringVar(value=str(cfg.get("stretch_preset") or "4:3"))
+        if self.stretch_preset_var.get() not in rst.PRESET_LABELS:
+            self.stretch_preset_var.set("4:3")
+        self.enabled_plugins: list[str] = [
+            str(name) for name in (cfg.get("enabled_plugins") or []) if str(name).lower().endswith(".bat")
+        ]
         self.test_mode_var = ctk.BooleanVar(value=bool(cfg.get("test_mode", False)))
         fflags = {**rff.DEFAULT_FFLAGS, **(cfg.get("fflags") or {})}
         self.unlock_fps_var = ctk.BooleanVar(value=bool(fflags.get("unlock_fps", False)))
@@ -322,7 +331,8 @@ class App(ctk.CTk):
         else:
             self.show_home()
             self.after(50, lambda: dark_titlebar(self))
-            self.after(80, self._load_windows_fonts_async)
+            self.after(80, self._apply_app_icon)
+            self.after(90, self._load_windows_fonts_async)
 
     def _run_auto(self):
         self.save_settings(True, silent=True)
@@ -344,7 +354,7 @@ class App(ctk.CTk):
         if logo.is_file():
             try:
                 raw = Image.open(logo).convert("RGBA")
-                self._home_logo = ctk.CTkImage(light_image=raw, dark_image=raw, size=(36, 36))
+                self._home_logo = ctk.CTkImage(light_image=raw, dark_image=raw, size=(42, 42))
                 ctk.CTkLabel(title_row, image=self._home_logo, text="").pack(side="left", padx=(0, 10))
             except Exception:
                 pass
@@ -355,13 +365,25 @@ class App(ctk.CTk):
             text_color=TEXT,
             anchor="w",
         ).pack(side="left")
+        ver_row = ctk.CTkFrame(left, fg_color="transparent")
+        ver_row.pack(fill="x", pady=(6, 0))
         ctk.CTkLabel(
-            left,
+            ver_row,
             text=f"Version {VERSION}",
             font=ctk.CTkFont(family="Segoe UI", size=11),
             text_color=MUTED,
             anchor="w",
-        ).pack(fill="x", pady=(2, 0))
+        ).pack(side="left")
+        ctk.CTkLabel(
+            ver_row,
+            text="UPDATE",
+            font=ctk.CTkFont(family="Segoe UI Semibold", size=10),
+            text_color=TEXT,
+            fg_color=PURPLE_BTN,
+            corner_radius=8,
+            width=62,
+            height=20,
+        ).pack(side="left", padx=(8, 0))
 
         about_row = ctk.CTkFrame(left, fg_color="transparent", cursor="hand2")
         about_row.pack(side="bottom", fill="x", pady=(0, 4))
@@ -435,6 +457,10 @@ class App(ctk.CTk):
             sidebar, "\uE7C1", "FastFlag", lambda: self._show_tab("fastflag"), False
         )
         self.nav_items["fastflag"].pack(fill="x", padx=8)
+        self.nav_items["software"] = SidebarItem(
+            sidebar, "\uE770", "Software", lambda: self._show_tab("software"), False
+        )
+        self.nav_items["software"].pack(fill="x", padx=(22, 8))
 
         ctk.CTkLabel(
             sidebar,
@@ -452,6 +478,10 @@ class App(ctk.CTk):
             sidebar, "\uE735", "Korblox", lambda: self._show_tab("premium"), False
         )
         self.nav_items["premium"].pack(fill="x", padx=8)
+        self.nav_items["plugin"] = SidebarItem(
+            sidebar, "\uE8A5", "Plugin", lambda: self._show_tab("plugin"), False
+        )
+        self.nav_items["plugin"].pack(fill="x", padx=(22, 8))
 
         ctk.CTkFrame(body, width=1, fg_color=BORDER).pack(side="left", fill="y")
 
@@ -460,12 +490,16 @@ class App(ctk.CTk):
 
         self.integrations_page = ctk.CTkScrollableFrame(content, fg_color=BG, corner_radius=0)
         self.fastflag_page = ctk.CTkScrollableFrame(content, fg_color=BG, corner_radius=0)
+        self.software_page = ctk.CTkScrollableFrame(content, fg_color=BG, corner_radius=0)
         self.graphics_page = ctk.CTkScrollableFrame(content, fg_color=BG, corner_radius=0)
         self.premium_page = ctk.CTkFrame(content, fg_color=BG)
+        self.plugin_page = ctk.CTkScrollableFrame(content, fg_color=BG, corner_radius=0)
         self._build_integrations(self.integrations_page)
         self._build_fastflag(self.fastflag_page)
+        self._build_software(self.software_page)
         self._build_graphics(self.graphics_page)
         self._build_premium(self.premium_page)
+        self._build_plugin(self.plugin_page)
 
         footer = ctk.CTkFrame(self.settings, fg_color=FOOTER_BG, height=64, corner_radius=0)
         footer.pack(side="bottom", fill="x")
@@ -586,7 +620,7 @@ class App(ctk.CTk):
             parent,
             "\uE710",
             "Integrations",
-            "Font, cielo e shift lock — solo su Roblox",
+            "Font, cielo, shift lock e stretched — solo su Roblox",
         )
 
         font_card = self._card(parent)
@@ -671,6 +705,32 @@ class App(ctk.CTk):
         )
         self.shift_name_label, self.shift_preview_label = self.shift_row
 
+        stretch_card = self._card(parent)
+        self._switch_row(
+            stretch_card,
+            "Stretched",
+            "Schiaccia solo la finestra di Roblox. Windows resta alla risoluzione normale.",
+            self.use_stretch_var,
+        )
+        preset_row = ctk.CTkFrame(stretch_card, fg_color="transparent")
+        preset_row.pack(fill="x", pady=(8, 0))
+        ctk.CTkLabel(
+            preset_row,
+            text="Preset",
+            font=ctk.CTkFont(family="Segoe UI", size=13),
+            text_color=TEXT,
+        ).pack(side="left")
+        ctk.CTkOptionMenu(
+            preset_row,
+            values=rst.PRESET_LABELS,
+            variable=self.stretch_preset_var,
+            width=140,
+            fg_color="#1f1f1f",
+            button_color=PURPLE_BTN,
+            button_hover_color=PURPLE_BTN_HOVER,
+            dropdown_fg_color=SURFACE,
+        ).pack(side="right")
+
     def _png_picker_row(self, parent, path: Path | None, button_text: str, command):
         row = ctk.CTkFrame(parent, fg_color="transparent")
         row.pack(fill="x", pady=(8, 0))
@@ -714,74 +774,8 @@ class App(ctk.CTk):
             parent,
             "\uE7C1",
             "FastFlag",
-            "Flag del client Roblox. Quelle non in allowlist vengono ignorate.",
+            "Aggiungi flag del client a mano (nome + valore).",
         )
-        card = self._card(parent)
-
-        self._switch_row(
-            card,
-            "Unlock FPS",
-            "Alza il limite FPS del client (valore sotto).",
-            self.unlock_fps_var,
-        )
-
-        fps_row = ctk.CTkFrame(card, fg_color="transparent")
-        fps_row.pack(fill="x", pady=(4, 10))
-        ctk.CTkLabel(
-            fps_row,
-            text="FPS target",
-            font=ctk.CTkFont(family="Segoe UI", size=13),
-            text_color=TEXT,
-        ).pack(side="left")
-        self.fps_entry = ctk.CTkEntry(
-            fps_row,
-            textvariable=self.fps_var,
-            width=90,
-            height=32,
-            corner_radius=8,
-            fg_color="#1f1f1f",
-            border_color=BORDER,
-            text_color=TEXT,
-        )
-        self.fps_entry.pack(side="right")
-
-        self._switch_row(
-            card,
-            "Alt+Enter fullscreen",
-            "Gestione fullscreen classica con Alt+Invio.",
-            self.alt_enter_var,
-        )
-        self._switch_row(
-            card,
-            "Disable DPI scale",
-            "Ignora lo scaling di Windows (125%, 150%).",
-            self.dpi_var,
-        )
-        self._switch_row(
-            card,
-            "Prefer D3D11",
-            "Usa Direct3D 11 come renderer.",
-            self.d3d11_var,
-        )
-        self._switch_row(
-            card,
-            "Prefer Vulkan",
-            "Usa Vulkan come renderer.",
-            self.vulkan_var,
-        )
-        self._switch_row(
-            card,
-            "Gray sky",
-            "Cielo grigio, meno effetti in atmosfera.",
-            self.gray_sky_var,
-        )
-        self._switch_row(
-            card,
-            "Freeze grass",
-            "Blocca il movimento dell’erba.",
-            self.grass_var,
-        )
-
         editor = self._card(parent)
         ctk.CTkLabel(
             editor,
@@ -870,6 +864,76 @@ class App(ctk.CTk):
             ).pack(side="left", padx=(8, 8))
             FooterButton(row, "Remove", lambda n=name: self._remove_custom_flag(n), width=80).pack(side="right")
 
+    def _build_software(self, parent):
+        self._page_header(
+            parent,
+            "\uE770",
+            "Software",
+            "Unlock FPS, DPI, Vulkan e gli altri switch del client.",
+        )
+        card = self._card(parent)
+        self._switch_row(
+            card,
+            "Unlock FPS",
+            "Alza il limite FPS del client (valore sotto).",
+            self.unlock_fps_var,
+        )
+        fps_row = ctk.CTkFrame(card, fg_color="transparent")
+        fps_row.pack(fill="x", pady=(4, 10))
+        ctk.CTkLabel(
+            fps_row,
+            text="FPS target",
+            font=ctk.CTkFont(family="Segoe UI", size=13),
+            text_color=TEXT,
+        ).pack(side="left")
+        self.fps_entry = ctk.CTkEntry(
+            fps_row,
+            textvariable=self.fps_var,
+            width=90,
+            height=32,
+            corner_radius=8,
+            fg_color="#1f1f1f",
+            border_color=BORDER,
+            text_color=TEXT,
+        )
+        self.fps_entry.pack(side="right")
+        self._switch_row(
+            card,
+            "Disable DPI scale",
+            "Ignora lo scaling di Windows (125%, 150%).",
+            self.dpi_var,
+        )
+        self._switch_row(
+            card,
+            "Prefer Vulkan",
+            "Usa Vulkan come renderer.",
+            self.vulkan_var,
+        )
+        self._switch_row(
+            card,
+            "Prefer D3D11",
+            "Usa Direct3D 11 come renderer.",
+            self.d3d11_var,
+        )
+        self._switch_row(
+            card,
+            "Alt+Enter fullscreen",
+            "Gestione fullscreen classica con Alt+Invio.",
+            self.alt_enter_var,
+        )
+        self._switch_row(
+            card,
+            "Gray sky",
+            "Cielo grigio, meno effetti in atmosfera.",
+            self.gray_sky_var,
+        )
+        self._switch_row(
+            card,
+            "Freeze grass",
+            "Blocca il movimento dell’erba.",
+            self.grass_var,
+        )
+
     def _add_custom_flag(self):
         name = self.flag_name_var.get().strip()
         value = self.flag_value_var.get().strip()
@@ -952,13 +1016,13 @@ class App(ctk.CTk):
             parent,
             "\uE735",
             "Korblox",
-            "Sostituisce la mesh della gamba destra, solo sul tuo client",
+            "Cancella la gamba vecchia e mette rightleg.mesh nuova, solo sul tuo client",
         )
         card = self._card(parent)
         self._switch_row(
             card,
             "Korblox",
-            "Mette rightleg.mesh al posto di content/avatar/meshes/rightleg.mesh. Incluso nell’exe.",
+            "Cancella content/avatar/meshes/rightleg.mesh e copia la mesh Korblox. Inclusa nell’exe.",
             self.use_korblox_var,
         )
         status = "Mesh Korblox pronta."
@@ -975,6 +1039,107 @@ class App(ctk.CTk):
             anchor="w",
             wraplength=520,
         ).pack(fill="x", pady=(8, 0))
+
+    def _build_plugin(self, parent):
+        self._page_header(
+            parent,
+            "\uE8A5",
+            "Plugin",
+            "Aggiungi tweak .bat. SolaX li avvia al Save and Launch, prima di aprire Roblox.",
+        )
+        card = self._card(parent)
+        ctk.CTkLabel(
+            card,
+            text="Solo file .bat. Vengono copiati in AppData\\SolaX\\plugins.",
+            font=ctk.CTkFont(family="Segoe UI", size=12),
+            text_color=MUTED,
+            anchor="w",
+        ).pack(fill="x", pady=(0, 10))
+        FooterButton(card, "Add file .bat", self._add_plugin_file, primary=True, width=140).pack(anchor="w")
+        self.plugin_list = ctk.CTkScrollableFrame(
+            card,
+            height=280,
+            fg_color="#1f1f1f",
+            corner_radius=8,
+            border_width=1,
+            border_color=BORDER,
+        )
+        self.plugin_list.pack(fill="x", pady=(12, 0))
+        self._rebuild_plugin_list()
+
+    def _plugin_enabled(self, name: str) -> bool:
+        return name in self.enabled_plugins
+
+    def _toggle_plugin(self, name: str, var: ctk.BooleanVar):
+        if var.get():
+            if name not in self.enabled_plugins:
+                self.enabled_plugins.append(name)
+        else:
+            self.enabled_plugins = [item for item in self.enabled_plugins if item != name]
+        self._persist_ui()
+
+    def _add_plugin_file(self):
+        path = filedialog.askopenfilename(
+            title="Scegli un plugin .bat",
+            filetypes=[("Batch", "*.bat")],
+        )
+        if not path:
+            return
+        try:
+            dest = rp.add_plugin(Path(path))
+        except Exception as exc:
+            messagebox.showerror("Plugin", str(exc))
+            return
+        if dest.name not in self.enabled_plugins:
+            self.enabled_plugins.append(dest.name)
+        self._rebuild_plugin_list()
+        self._persist_ui()
+
+    def _remove_plugin_file(self, name: str):
+        rp.remove_plugin(name)
+        self.enabled_plugins = [item for item in self.enabled_plugins if item != name]
+        self._rebuild_plugin_list()
+        self._persist_ui()
+
+    def _rebuild_plugin_list(self):
+        if not hasattr(self, "plugin_list"):
+            return
+        for child in self.plugin_list.winfo_children():
+            child.destroy()
+        plugins = rp.list_plugins()
+        known = {p.name for p in plugins}
+        self.enabled_plugins = [name for name in self.enabled_plugins if name in known]
+        if not plugins:
+            ctk.CTkLabel(
+                self.plugin_list,
+                text="Nessun plugin. Aggiungi un file .bat.",
+                text_color=MUTED,
+                font=ctk.CTkFont(family="Segoe UI", size=12),
+            ).pack(pady=14)
+            return
+        for path in plugins:
+            row = ctk.CTkFrame(self.plugin_list, fg_color="transparent")
+            row.pack(fill="x", pady=4)
+            var = ctk.BooleanVar(value=self._plugin_enabled(path.name))
+            ctk.CTkSwitch(
+                row,
+                text="",
+                variable=var,
+                command=lambda n=path.name, v=var: self._toggle_plugin(n, v),
+                progress_color=PURPLE_BTN,
+                button_color=TEXT,
+                fg_color="#3a3a3a",
+                width=44,
+                switch_width=36,
+            ).pack(side="left")
+            ctk.CTkLabel(
+                row,
+                text=path.name,
+                font=ctk.CTkFont(family="Segoe UI Semibold", size=13),
+                text_color=TEXT,
+                anchor="w",
+            ).pack(side="left", fill="x", expand=True, padx=(8, 8))
+            FooterButton(row, "Remove", lambda n=path.name: self._remove_plugin_file(n), width=80).pack(side="right")
 
     def show_home(self):
         self._persist_ui()
@@ -1005,8 +1170,10 @@ class App(ctk.CTk):
         pages = {
             "integrations": self.integrations_page,
             "fastflag": self.fastflag_page,
+            "software": self.software_page,
             "graphics": self.graphics_page,
             "premium": self.premium_page,
+            "plugin": self.plugin_page,
         }
         for page in pages.values():
             page.pack_forget()
@@ -1206,13 +1373,15 @@ class App(ctk.CTk):
                 "use_custom_font": bool(self.use_font_var.get()),
                 "use_custom_sky": bool(self.use_sky_var.get()),
                 "use_shift_lock": bool(self.use_shift_var.get()),
-                "use_stretch": False,
+                "use_stretch": bool(self.use_stretch_var.get()),
+                "stretch_preset": self.stretch_preset_var.get() if self.stretch_preset_var.get() in rst.PRESET_LABELS else "4:3",
                 "last_font": str(self.selected_font) if self.selected_font else cfg.get("last_font"),
                 "last_font_name": self.selected_family or cfg.get("last_font_name"),
                 "sky_png": str(self.sky_png) if self.sky_png else cfg.get("sky_png"),
                 "shift_lock_png": str(self.shift_png) if self.shift_png else cfg.get("shift_lock_png"),
                 "use_headless": False,
                 "use_korblox": bool(self.use_korblox_var.get()),
+                "enabled_plugins": list(self.enabled_plugins),
                 "test_mode": bool(self.test_mode_var.get()),
                 "settings_tab": self._settings_tab,
                 "fflags": {
@@ -1244,6 +1413,8 @@ class App(ctk.CTk):
             self.use_sky_var,
             self.use_shift_var,
             self.use_korblox_var,
+            self.use_stretch_var,
+            self.stretch_preset_var,
             self.test_mode_var,
             self.unlock_fps_var,
             self.fps_var,
@@ -1348,6 +1519,9 @@ class App(ctk.CTk):
         use_sky = bool(cfg.get("use_custom_sky"))
         use_shift = bool(cfg.get("use_shift_lock"))
         use_korblox = bool(cfg.get("use_korblox"))
+        use_stretch = bool(cfg.get("use_stretch"))
+        stretch_preset = str(cfg.get("stretch_preset") or "4:3")
+        enabled_plugins = list(cfg.get("enabled_plugins") or [])
         sky_png = self.sky_png
         shift_png = self.shift_png
         fflags = cfg.get("fflags") or {}
@@ -1361,6 +1535,9 @@ class App(ctk.CTk):
                 install = rf.find_roblox()
                 if install is None:
                     raise FileNotFoundError("Roblox non trovato.")
+                wait_until = time.time() + 8
+                while rf.roblox_running() and time.time() < wait_until:
+                    time.sleep(0.25)
 
                 def step(label: str, fn):
                     try:
@@ -1395,6 +1572,9 @@ class App(ctk.CTk):
                 else:
                     step("Korblox", lambda: rk.restore_korblox(install))
                 rst.stop_stretch_watcher()
+                if enabled_plugins:
+                    plugin_warns = rp.run_plugins(enabled_plugins, cwd=install.version_dir)
+                    warnings.extend(plugin_warns)
                 step(
                     "FastFlag",
                     lambda: rff.apply_fflags(
@@ -1408,6 +1588,8 @@ class App(ctk.CTk):
                 if launch:
                     rf.launch_roblox(install)
                     launched = True
+                    if use_stretch:
+                        rst.start_stretch_watcher(stretch_preset)
             except Exception as exc:
                 fatal = exc
                 rf.log(f"save/launch: {exc}")
@@ -1469,6 +1651,12 @@ class App(ctk.CTk):
 
 
 if __name__ == "__main__":
+    if "--stretch-watch" in sys.argv:
+        idx = sys.argv.index("--stretch-watch")
+        preset = sys.argv[idx + 1] if idx + 1 < len(sys.argv) else "4:3"
+        rst.run_stretch_watch(preset)
+        raise SystemExit(0)
+
     def is_auto_launch() -> bool:
         if "--auto" in sys.argv:
             return True

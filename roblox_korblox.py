@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import shutil
 import sys
+import time
 from pathlib import Path
 
 import roblox_fonts as rf
@@ -96,11 +97,23 @@ def apply_korblox(install: rf.RobloxInstall | None = None) -> rf.RobloxInstall:
     if dest.is_file() and not backup.is_file():
         backup.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(dest, backup)
-    rf.make_writable(dest)
+    last_err: OSError | None = None
+    for _ in range(8):
+        try:
+            rf.make_writable(dest)
+            if dest.exists():
+                dest.unlink()
+            last_err = None
+            break
+        except OSError as exc:
+            last_err = exc
+            time.sleep(0.25)
+    if dest.exists():
+        raise OSError(last_err or "Impossibile cancellare la gamba vecchia. Chiudi Roblox e riprova.")
     shutil.copy2(src, dest)
-    if dest.stat().st_size != src.stat().st_size:
+    if not dest.is_file() or dest.stat().st_size != src.stat().st_size:
         raise OSError("Copia Korblox incompleta: Roblox è aperto o il file è bloccato.")
-    rf.log(f"korblox: {src} ({src.stat().st_size}b) -> {dest}")
+    rf.log(f"korblox replace: deleted old mesh, copied {src} ({src.stat().st_size}b) -> {dest}")
     return install
 
 

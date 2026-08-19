@@ -343,8 +343,7 @@ def spawn_stretch_helper(preset: str) -> None:
         rf.log(f"stretch helper failed: {exc}")
 
 
-def apply_gbs_stretched(preset: str) -> None:
-    apply_windowed_maximized()
+def _stretch_loop(preset: str, stop_event) -> None:
     deadline = time.time() + 90
     hwnd = 0
     while time.time() < deadline:
@@ -362,13 +361,17 @@ def apply_gbs_stretched(preset: str) -> None:
     user32.SetWindowPos(hwnd, HWND_TOP, 0, 0, rw, rh, SWP_FRAMECHANGED | SWP_SHOWWINDOW)
     time.sleep(0.4)
     stretch_window(hwnd)
-    rf.log(f"stretch: applied hwnd={hwnd}")
+    rf.log(f"stretch: applied hwnd={hwnd} render={rw}x{rh}")
     while rf.roblox_running():
         if stop_event is not None and stop_event.is_set():
             return
         current = find_roblox_hwnd() or hwnd
         stretch_window(current)
         time.sleep(0.8)
+
+
+def apply_gbs_stretched(preset: str) -> None:
+    _stretch_loop(preset, None)
 
 
 def run_stretch_watch(preset: str) -> None:

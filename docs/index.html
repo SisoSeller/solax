@@ -49,20 +49,22 @@
       color: var(--text);
       font-weight: 700;
       letter-spacing: 0.04em;
+      z-index: 2;
     }
     .brand img {
       width: 36px;
       height: 36px;
       border-radius: 10px;
     }
-    .top-actions {
-      position: fixed;
+    .top-center {
+      position: absolute;
+      left: 50%;
       top: 18px;
-      right: 24px;
-      z-index: 60;
+      transform: translateX(-50%);
       display: flex;
       align-items: center;
       gap: 10px;
+      z-index: 61;
     }
     .download {
       display: inline-flex;
@@ -78,10 +80,8 @@
       box-shadow: 0 8px 24px rgba(124, 92, 252, 0.55);
       white-space: nowrap;
     }
-    .download:hover {
-      background: #8f74ff;
-    }
-    .review {
+    .download:hover { background: #8f74ff; }
+    .review, .login {
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -96,8 +96,23 @@
       cursor: pointer;
       white-space: nowrap;
     }
-    .review:hover {
-      background: var(--purple);
+    .review:hover, .login:hover { background: var(--purple); }
+    .login { margin-left: auto; z-index: 2; }
+    .discord {
+      display: inline-flex;
+      align-items: center;
+      padding: 10px 16px;
+      border: 1px solid #3d3d4a;
+      border-radius: 10px;
+      color: var(--text);
+      text-decoration: none;
+      background: rgba(22, 22, 26, 0.8);
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .discord:hover {
+      border-color: var(--purple);
+      color: var(--purple-soft);
     }
     .modal-bg {
       display: none;
@@ -109,9 +124,7 @@
       justify-content: center;
       padding: 24px;
     }
-    .modal-bg.open {
-      display: flex;
-    }
+    .modal-bg.open { display: flex; }
     .modal {
       width: min(440px, 100%);
       background: var(--panel);
@@ -120,15 +133,9 @@
       padding: 22px;
       text-align: left;
     }
-    .modal h3 {
-      font-size: 20px;
-      margin-bottom: 6px;
-    }
-    .modal .hint {
-      color: var(--muted);
-      font-size: 13px;
-      margin-bottom: 16px;
-    }
+    .modal.wide { width: min(520px, 100%); }
+    .modal h3 { font-size: 20px; margin-bottom: 6px; }
+    .modal .hint { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
     .modal label {
       display: block;
       font-size: 12px;
@@ -146,10 +153,7 @@
       font-family: inherit;
       font-size: 14px;
     }
-    .modal textarea {
-      min-height: 120px;
-      resize: vertical;
-    }
+    .modal textarea { min-height: 120px; resize: vertical; }
     .modal-actions {
       display: flex;
       justify-content: flex-end;
@@ -171,33 +175,26 @@
       border-color: var(--purple);
       color: #fff;
     }
-    .modal-actions .send:disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
-    }
-    #review-status {
+    .modal-actions .send:disabled { opacity: 0.55; cursor: not-allowed; }
+    #review-status, #login-status {
       min-height: 18px;
       font-size: 13px;
       color: var(--purple-soft);
       margin-bottom: 8px;
     }
-    .discord {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 16px;
-      border: 1px solid #3d3d4a;
-      border-radius: 10px;
-      color: var(--text);
-      text-decoration: none;
-      background: rgba(22, 22, 26, 0.8);
-      font-size: 14px;
-      font-weight: 600;
+    .stat {
+      background: #121216;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 22px;
+      margin-top: 8px;
     }
-    .discord:hover {
-      border-color: var(--purple);
+    .stat .num {
+      font-size: 42px;
+      font-weight: 700;
       color: var(--purple-soft);
     }
+    .stat .lbl { color: var(--muted); margin-top: 6px; }
     .hero {
       min-height: 100vh;
       display: flex;
@@ -262,10 +259,7 @@
       padding: 22px 24px;
       margin-bottom: 14px;
     }
-    .card h3 {
-      font-size: 20px;
-      margin-bottom: 10px;
-    }
+    .card h3 { font-size: 20px; margin-bottom: 10px; }
     .card .tag {
       display: inline-block;
       font-size: 11px;
@@ -278,12 +272,22 @@
       margin-left: 8px;
       vertical-align: middle;
     }
+    .card .tag.update {
+      color: #fff;
+      background: var(--purple);
+      border-color: var(--purple);
+    }
     .card ul {
       padding-left: 18px;
       color: var(--muted);
       line-height: 1.7;
     }
     .card li { margin: 2px 0; }
+    @media (max-width: 860px) {
+      .top-center { position: static; transform: none; flex-wrap: wrap; justify-content: center; }
+      .top { flex-wrap: wrap; gap: 10px; pointer-events: auto; }
+      .login { margin-left: 0; }
+    }
   </style>
 </head>
 <body>
@@ -292,11 +296,12 @@
       <img src="icon.png" alt="SolaX" />
       SolaX
     </a>
-    <div class="top-actions">
+    <div class="top-center">
       <a class="download" href="https://github.com/SisoSeller/solax/releases/latest/download/SolaX.exe" download="SolaX.exe">Download</a>
       <button type="button" class="review" id="review-open">Review</button>
       <a class="discord" href="https://discord.gg/zq3fR5MxgU" target="_blank" rel="noopener">Discord</a>
     </div>
+    <button type="button" class="login" id="login-open">Accedi</button>
   </header>
 
   <section class="hero">
@@ -332,8 +337,19 @@
         <li>Le impostazioni restano quando chiudi SolaX</li>
         <li>SolaX Auto: avvio con un doppio clic, senza menu</li>
         <li>Applica solo gli switch che accendi tu, senza toccare il resto di Roblox</li>
-        <li>Rimosso Stretched dal menu</li>
         <li>SolaX.exe e SolaX Auto.exe</li>
+      </ul>
+    </article>
+
+    <article class="card">
+      <h3>1.1.0 <span class="tag update">UPDATE</span></h3>
+      <ul>
+        <li>Korblox: cancella la gamba vecchia e poi mette la mesh nuova</li>
+        <li>FastFlag solo editor, Software con Unlock FPS, DPI, Vulkan</li>
+        <li>Plugin .bat sotto Korblox, avviati al Save and Launch</li>
+        <li>Stretched sulla finestra di Roblox, senza toccare il resto di Windows</li>
+        <li>Icona SolaX nell’app e nell’exe</li>
+        <li>Download, Review e Discord in alto al centro</li>
       </ul>
     </article>
   </section>
@@ -354,6 +370,37 @@
     </div>
   </div>
 
+  <div class="modal-bg" id="login-modal">
+    <div class="modal">
+      <h3>Accedi</h3>
+      <p class="hint">Pannello download SolaX.</p>
+      <label for="login-user">Utente</label>
+      <input id="login-user" maxlength="32" autocomplete="username" />
+      <label for="login-pass">Password</label>
+      <input id="login-pass" type="password" maxlength="32" autocomplete="current-password" />
+      <p id="login-status"></p>
+      <div class="modal-actions">
+        <button type="button" id="login-close">Chiudi</button>
+        <button type="button" class="send" id="login-send">Entra</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-bg" id="stats-modal">
+    <div class="modal wide">
+      <h3>Pannello</h3>
+      <p class="hint">Download dell’app dal sito.</p>
+      <div class="stat">
+        <div class="num" id="download-count">…</div>
+        <div class="lbl">persone hanno scaricato SolaX.exe</div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="stats-logout">Esci</button>
+        <button type="button" class="send" id="stats-close">Chiudi</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     (function () {
       var hook = "https://discord.com/api/webhooks/1539625156920742030/2RLS-TeitMn-Xa2kUNQxRBse3IFbxdaIR0XqKn6RgsT5JGc0rirR_MK46bl7PDSK95tD";
@@ -368,15 +415,8 @@
         var d = new Date();
         return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
       }
-
-      function alreadySent() {
-        return localStorage.getItem(key) === today();
-      }
-
-      function setStatus(msg) {
-        statusEl.textContent = msg;
-      }
-
+      function alreadySent() { return localStorage.getItem(key) === today(); }
+      function setStatus(msg) { statusEl.textContent = msg; }
       function clean(value) {
         return String(value || "")
           .replace(/@everyone/gi, "")
@@ -384,7 +424,6 @@
           .replace(/https?:\/\/discord(?:app)?\.com\/api\/webhooks\/\S+/gi, "")
           .trim();
       }
-
       function openModal() {
         modal.classList.add("open");
         if (alreadySent()) {
@@ -399,17 +438,10 @@
           textEl.disabled = false;
         }
       }
-
-      function closeModal() {
-        modal.classList.remove("open");
-      }
-
+      function closeModal() { modal.classList.remove("open"); }
       document.getElementById("review-open").addEventListener("click", openModal);
       document.getElementById("review-close").addEventListener("click", closeModal);
-      modal.addEventListener("click", function (e) {
-        if (e.target === modal) closeModal();
-      });
-
+      modal.addEventListener("click", function (e) { if (e.target === modal) closeModal(); });
       sendBtn.addEventListener("click", function () {
         if (alreadySent()) {
           setStatus("Hai già inviato una review oggi. Torna domani.");
@@ -449,6 +481,69 @@
             setStatus("Invio non riuscito. Riprova.");
           });
       });
+
+      var USER = "898989";
+      var PASS = "898989";
+      var loginModal = document.getElementById("login-modal");
+      var statsModal = document.getElementById("stats-modal");
+      var loginBtn = document.getElementById("login-open");
+      var loginStatus = document.getElementById("login-status");
+      var countEl = document.getElementById("download-count");
+
+      function loggedIn() { return sessionStorage.getItem("solax_admin") === "1"; }
+      function setLogged(on) {
+        if (on) sessionStorage.setItem("solax_admin", "1");
+        else sessionStorage.removeItem("solax_admin");
+        loginBtn.textContent = on ? "Pannello" : "Accedi";
+      }
+      function loadDownloads() {
+        countEl.textContent = "…";
+        fetch("https://api.github.com/repos/SisoSeller/solax/releases")
+          .then(function (r) { return r.json(); })
+          .then(function (releases) {
+            var total = 0;
+            (releases || []).forEach(function (rel) {
+              (rel.assets || []).forEach(function (asset) {
+                if (String(asset.name).toLowerCase() === "solax.exe") {
+                  total += Number(asset.download_count) || 0;
+                }
+              });
+            });
+            countEl.textContent = String(total);
+          })
+          .catch(function () { countEl.textContent = "n/d"; });
+      }
+      function openLogin() {
+        if (loggedIn()) {
+          statsModal.classList.add("open");
+          loadDownloads();
+          return;
+        }
+        loginStatus.textContent = "";
+        loginModal.classList.add("open");
+      }
+      document.getElementById("login-open").addEventListener("click", openLogin);
+      document.getElementById("login-close").addEventListener("click", function () { loginModal.classList.remove("open"); });
+      document.getElementById("stats-close").addEventListener("click", function () { statsModal.classList.remove("open"); });
+      document.getElementById("stats-logout").addEventListener("click", function () {
+        setLogged(false);
+        statsModal.classList.remove("open");
+      });
+      loginModal.addEventListener("click", function (e) { if (e.target === loginModal) loginModal.classList.remove("open"); });
+      statsModal.addEventListener("click", function (e) { if (e.target === statsModal) statsModal.classList.remove("open"); });
+      document.getElementById("login-send").addEventListener("click", function () {
+        var u = document.getElementById("login-user").value.trim();
+        var p = document.getElementById("login-pass").value;
+        if (u === USER && p === PASS) {
+          setLogged(true);
+          loginModal.classList.remove("open");
+          statsModal.classList.add("open");
+          loadDownloads();
+        } else {
+          loginStatus.textContent = "Credenziali non valide.";
+        }
+      });
+      setLogged(loggedIn());
     })();
   </script>
 </body>
