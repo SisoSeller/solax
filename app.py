@@ -1010,33 +1010,63 @@ class App(ctk.CTk):
         ).pack(fill="x", pady=(8, 0))
 
     def _build_plugin(self, parent):
-        self._page_header(
-            parent,
-            "\uE8A5",
-            "Plugin",
-            "Trascina un plugin tuo. Nell’app non ce n’è nessuno finché non lo aggiungi.",
-        )
+        self.plugin_list_view = False
         tools = ctk.CTkFrame(parent, fg_color="transparent")
-        tools.pack(fill="x", padx=28, pady=(4, 8))
+        tools.pack(fill="x", padx=22, pady=(18, 10))
         self.plugin_search_var = ctk.StringVar(value="")
         self.plugin_search_var.trace_add("write", lambda *_: self._rebuild_plugin_list())
         search = ctk.CTkEntry(
             tools,
             textvariable=self.plugin_search_var,
-            placeholder_text="Search for plugins…",
-            height=36,
+            placeholder_text="Search for plugins...",
+            height=40,
             corner_radius=8,
             fg_color="#1f1f1f",
             border_color=BORDER,
             text_color=TEXT,
+            font=ctk.CTkFont(family="Segoe UI", size=14),
         )
         search.pack(side="left", fill="x", expand=True)
-        FooterButton(tools, "Add plugin", self._add_plugin_file, primary=True, width=120).pack(side="right", padx=(10, 0))
+        for glyph, cmd in (("\uE8CB", self._open_plugin_store), ("\uE8A1", self._toggle_plugin_view)):
+            ctk.CTkButton(
+                tools,
+                text=glyph,
+                command=cmd,
+                width=40,
+                height=40,
+                corner_radius=8,
+                fg_color="#1f1f1f",
+                hover_color=SURFACE_HOVER,
+                border_width=1,
+                border_color=BORDER,
+                text_color=TEXT,
+                font=ctk.CTkFont(family=icon_family(), size=16),
+            ).pack(side="left", padx=(8, 0))
 
         self.plugin_list = ctk.CTkScrollableFrame(parent, fg_color=BG, corner_radius=0)
-        self.plugin_list.pack(fill="both", expand=True, padx=20, pady=(0, 16))
+        self.plugin_list.pack(fill="both", expand=True, padx=14, pady=(0, 16))
+        self.plugin_fab = ctk.CTkButton(
+            parent,
+            text="Create a New Plugin",
+            command=self._add_plugin_file,
+            height=40,
+            width=188,
+            corner_radius=20,
+            fg_color=PURPLE_BTN,
+            hover_color=PURPLE_BTN_HOVER,
+            text_color=TEXT,
+            font=ctk.CTkFont(family="Segoe UI Semibold", size=13),
+        )
+        self.plugin_fab.place(relx=1.0, rely=1.0, x=-18, y=-18, anchor="se")
         self._rebuild_plugin_list()
         self.after(300, self._hook_plugin_drop)
+
+    def _open_plugin_store(self):
+        webbrowser.open("https://sisoseller.github.io/solax/plugins.html")
+
+    def _toggle_plugin_view(self):
+        self.plugin_list_view = not getattr(self, "plugin_list_view", False)
+        self._rebuild_plugin_list()
 
     def _plugin_enabled(self, name: str) -> bool:
         return name in self.enabled_plugins
@@ -1122,7 +1152,7 @@ class App(ctk.CTk):
             ).pack(pady=(36, 6))
             ctk.CTkLabel(
                 empty,
-                text="Trascina qui un file .bat (es. ALL DAY) oppure premi Add plugin.\nI plugin non sono dentro SolaX: li aggiungi tu.",
+                text="Create a New Plugin in basso a destra, oppure trascina un .bat qui.\nScaricali dal sito: tasto accanto alla ricerca.",
                 font=ctk.CTkFont(family="Segoe UI", size=13),
                 text_color=MUTED,
                 justify="center",
@@ -1131,11 +1161,13 @@ class App(ctk.CTk):
             return
         grid = ctk.CTkFrame(self.plugin_list, fg_color="transparent")
         grid.pack(fill="both", expand=True)
-        grid.grid_columnconfigure(0, weight=1)
-        grid.grid_columnconfigure(1, weight=1)
+        cols = 1 if getattr(self, "plugin_list_view", False) else 3
+        wrap = 720 if cols == 1 else 220
+        for col in range(cols):
+            grid.grid_columnconfigure(col, weight=1)
         for index, path in enumerate(plugins):
             card = ctk.CTkFrame(grid, fg_color=SURFACE, corner_radius=12, border_width=1, border_color=BORDER)
-            card.grid(row=index // 2, column=index % 2, sticky="nsew", padx=8, pady=8)
+            card.grid(row=index // cols, column=index % cols, sticky="nsew", padx=8, pady=8)
             inner = ctk.CTkFrame(card, fg_color="transparent")
             inner.pack(fill="both", expand=True, padx=16, pady=14)
             ctk.CTkLabel(
@@ -1152,8 +1184,8 @@ class App(ctk.CTk):
                 text_color=MUTED,
                 anchor="w",
                 justify="left",
-                wraplength=280,
-            ).pack(fill="x", pady=(6, 12))
+                wraplength=wrap,
+            ).pack(fill="x", pady=(6, 14))
             bottom = ctk.CTkFrame(inner, fg_color="transparent")
             bottom.pack(fill="x", side="bottom")
             FooterButton(bottom, "Details", lambda p=path: self._plugin_details(p), width=84).pack(side="left")
@@ -1164,12 +1196,14 @@ class App(ctk.CTk):
                 text="",
                 variable=var,
                 command=lambda n=path.name, v=var: self._toggle_plugin(n, v),
-                progress_color=PURPLE_BTN,
+                progress_color="#3b82f6",
                 button_color=TEXT,
                 fg_color="#3a3a3a",
                 width=44,
                 switch_width=36,
             ).pack(side="right")
+        if getattr(self, "plugin_fab", None) is not None:
+            self.plugin_fab.lift()
 
     def show_home(self):
         self._persist_ui()

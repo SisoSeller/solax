@@ -1,0 +1,36 @@
+name: Sync Discord plugins
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Pull .bat files from Discord
+        env:
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_PLUGIN_WEBHOOK: ${{ secrets.DISCORD_PLUGIN_WEBHOOK }}
+        run: python scripts/sync_discord_plugins.py
+      - name: Publish store
+        run: |
+          git config user.name "solax-store"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/store.json website/store.json docs/store website/store
+          if git diff --cached --quiet; then
+            echo "No store changes"
+          else
+            git commit -m "Sync plugins from Discord"
+            git push origin HEAD:main
+          fi

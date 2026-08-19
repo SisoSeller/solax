@@ -3,14 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SolaX</title>
+  <title>Plugin — SolaX</title>
   <link rel="icon" href="favicon.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon.png" />
   <style>
     :root {
-      --bg: #0e0e10;
-      --panel: #16161a;
-      --line: #2a2a32;
+      --bg: #141414;
+      --panel: #1f1f1f;
+      --card: #2a2a2a;
+      --line: #3a3a3a;
       --text: #f4f4f7;
       --muted: #9a9aa8;
       --purple: #7c5cfc;
@@ -20,9 +21,7 @@
     html, body { height: 100%; }
     body {
       font-family: "Segoe UI", system-ui, sans-serif;
-      background:
-        radial-gradient(900px 500px at 50% 18%, rgba(124, 92, 252, 0.22), transparent 60%),
-        var(--bg);
+      background: var(--bg);
       color: var(--text);
       min-height: 100%;
     }
@@ -37,19 +36,9 @@
       justify-content: space-between;
       padding: 18px 24px;
       pointer-events: none;
-      transition: opacity 0.25s ease, transform 0.25s ease;
+      background: linear-gradient(to bottom, rgba(20,20,20,0.96), transparent);
     }
-    .top.is-hidden {
-      opacity: 0;
-      transform: translateY(-120%);
-      pointer-events: none !important;
-    }
-    .top.is-hidden * {
-      pointer-events: none !important;
-    }
-    .top a, .top button {
-      pointer-events: auto;
-    }
+    .top a, .top button { pointer-events: auto; }
     .brand {
       display: flex;
       align-items: center;
@@ -60,11 +49,7 @@
       letter-spacing: 0.04em;
       z-index: 2;
     }
-    .brand img {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-    }
+    .brand img { width: 36px; height: 36px; border-radius: 10px; }
     .top-center {
       position: absolute;
       left: 50%;
@@ -75,55 +60,118 @@
       gap: 10px;
       z-index: 61;
     }
-    .download {
+    .download, .review, .login, .discord {
       display: inline-flex;
       align-items: center;
       justify-content: center;
       padding: 12px 20px;
       border-radius: 10px;
-      color: #fff !important;
-      text-decoration: none;
-      background: var(--purple);
-      font-size: 15px;
-      font-weight: 700;
-      box-shadow: 0 8px 24px rgba(124, 92, 252, 0.55);
-      white-space: nowrap;
-    }
-    .download:hover { background: #8f74ff; }
-    .review, .login {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 12px 20px;
-      border-radius: 10px;
-      color: #fff;
-      background: transparent;
-      border: 1px solid var(--purple);
       font-size: 15px;
       font-weight: 700;
       font-family: inherit;
       cursor: pointer;
       white-space: nowrap;
       text-decoration: none;
+      color: #fff;
     }
-    .review:hover, .login:hover { background: var(--purple); }
+    .download {
+      background: var(--purple);
+      box-shadow: 0 8px 24px rgba(124, 92, 252, 0.55);
+    }
+    .download:hover { background: #8f74ff; }
+    .review, .login {
+      background: transparent;
+      border: 1px solid var(--purple);
+    }
+    .review:hover, .login:hover, .review.current { background: var(--purple); }
     .login { margin-left: auto; z-index: 2; }
     .discord {
-      display: inline-flex;
-      align-items: center;
       padding: 10px 16px;
       border: 1px solid #3d3d4a;
-      border-radius: 10px;
       color: var(--text);
-      text-decoration: none;
       background: rgba(22, 22, 26, 0.8);
       font-size: 14px;
       font-weight: 600;
     }
-    .discord:hover {
-      border-color: var(--purple);
-      color: var(--purple-soft);
+    .discord:hover { border-color: var(--purple); color: var(--purple-soft); }
+    .page {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 96px 24px 40px;
     }
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .search {
+      flex: 1;
+      height: 44px;
+      padding: 0 16px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #1a1a1a;
+      color: var(--text);
+      font-size: 15px;
+      font-family: inherit;
+    }
+    .icon-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #1a1a1a;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 18px;
+    }
+    .icon-btn.on { border-color: var(--purple); color: var(--purple-soft); }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+    .grid.list { grid-template-columns: 1fr; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 18px 18px 14px;
+      display: flex;
+      flex-direction: column;
+      min-height: 168px;
+    }
+    .card h3 { font-size: 18px; font-weight: 650; margin-bottom: 8px; }
+    .card .desc {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+      flex: 1;
+    }
+    .card .row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .ghost {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 7px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .ghost:hover { border-color: var(--purple); }
+    .empty { color: var(--muted); padding: 48px 8px; }
     .modal-bg {
       display: none;
       position: fixed;
@@ -141,14 +189,8 @@
       border: 1px solid var(--line);
       border-radius: 16px;
       padding: 22px;
-      text-align: left;
     }
     .modal.wide { width: min(520px, 100%); }
-    .modal.panel {
-      width: min(640px, 100%);
-      max-height: 90vh;
-      overflow-y: auto;
-    }
     .modal h3 { font-size: 20px; margin-bottom: 6px; }
     .modal .hint { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
     .modal label {
@@ -157,7 +199,7 @@
       color: var(--muted);
       margin-bottom: 6px;
     }
-    .modal input, .modal textarea, .modal select {
+    .modal input, .modal textarea {
       width: 100%;
       margin-bottom: 12px;
       padding: 10px 12px;
@@ -175,7 +217,7 @@
       gap: 8px;
       margin-top: 6px;
     }
-    .modal-actions button {
+    .modal-actions button, .modal-actions a.send {
       padding: 10px 16px;
       border-radius: 10px;
       border: 1px solid var(--line);
@@ -184,127 +226,13 @@
       font-weight: 700;
       font-family: inherit;
       cursor: pointer;
+      text-decoration: none;
     }
     .modal-actions .send {
       background: var(--purple);
       border-color: var(--purple);
       color: #fff;
     }
-    .modal-actions .send:disabled { opacity: 0.55; cursor: not-allowed; }
-    #review-status, #login-status, #plugin-status {
-      min-height: 18px;
-      font-size: 13px;
-      color: var(--purple-soft);
-      margin-bottom: 8px;
-    }
-    .panel-block {
-      margin-top: 22px;
-      padding-top: 18px;
-      border-top: 1px solid var(--line);
-    }
-    .panel-block h4 {
-      font-size: 15px;
-      margin-bottom: 8px;
-    }
-    .admin-plugin {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      background: #121216;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 12px 14px;
-      margin-bottom: 8px;
-    }
-    .admin-plugin strong { display: block; }
-    .admin-plugin span { color: var(--muted); font-size: 12px; }
-    .admin-plugin button {
-      padding: 8px 12px;
-      border-radius: 8px;
-      border: 1px solid var(--line);
-      background: #1a1a20;
-      color: var(--text);
-      font-weight: 700;
-      font-family: inherit;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-    .store {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 0 24px 96px;
-    }
-    .store h2 {
-      font-size: 14px;
-      letter-spacing: 0.18em;
-      color: var(--muted);
-      margin-bottom: 8px;
-      text-transform: uppercase;
-    }
-    .store .intro {
-      color: var(--muted);
-      font-size: 14px;
-      margin-bottom: 18px;
-    }
-    .store-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 14px;
-    }
-    .store-card {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .store-card h3 { font-size: 18px; }
-    .store-card .desc {
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.55;
-      flex: 1;
-    }
-    .store-card .meta {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-top: 6px;
-    }
-    .price {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--purple-soft);
-      border: 1px solid rgba(124, 92, 252, 0.45);
-      border-radius: 999px;
-      padding: 4px 10px;
-    }
-    .price.paid {
-      color: #fff;
-      background: var(--purple);
-      border-color: var(--purple);
-    }
-    .store-card a, .store-card .off {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 8px 14px;
-      border-radius: 10px;
-      font-size: 13px;
-      font-weight: 700;
-      text-decoration: none;
-      color: #fff;
-      background: var(--purple);
-    }
-    .store-card .off {
-      background: transparent;
-      border: 1px solid var(--purple);
-    }
-    .store-empty { color: var(--muted); }
     .stat {
       background: #121216;
       border: 1px solid var(--line);
@@ -312,101 +240,11 @@
       padding: 22px;
       margin-top: 8px;
     }
-    .stat .num {
-      font-size: 42px;
-      font-weight: 700;
-      color: var(--purple-soft);
-    }
+    .stat .num { font-size: 42px; font-weight: 700; color: var(--purple-soft); }
     .stat .lbl { color: var(--muted); margin-top: 6px; }
-    .hero {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 96px 24px 64px;
-    }
-    .hero img.logo {
-      width: 112px;
-      height: 112px;
-      border-radius: 28px;
-      box-shadow: 0 20px 60px rgba(124, 92, 252, 0.35);
-      margin-bottom: 22px;
-    }
-    .hero h1 {
-      font-size: 72px;
-      letter-spacing: 0.08em;
-      font-weight: 700;
-      line-height: 1;
-    }
-    .by {
-      margin-top: 18px;
-      font-size: 20px;
-      color: var(--purple-soft);
-      letter-spacing: 0.28em;
-      text-transform: uppercase;
-    }
-    .hero-video {
-      margin-top: 32px;
-      width: min(960px, 100%);
-      border-radius: 16px;
-      overflow: hidden;
-      border: 1px solid var(--line);
-      background: #000;
-      box-shadow: 0 20px 60px rgba(124, 92, 252, 0.28);
-    }
-    .hero-video video {
-      display: block;
-      width: 100%;
-      height: auto;
-      max-height: 70vh;
-      background: #000;
-    }
-    .changelog {
-      max-width: 720px;
-      margin: 0 auto;
-      padding: 0 24px 96px;
-    }
-    .changelog h2 {
-      font-size: 14px;
-      letter-spacing: 0.18em;
-      color: var(--muted);
-      margin-bottom: 18px;
-      text-transform: uppercase;
-    }
-    .card {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 22px 24px;
-      margin-bottom: 14px;
-    }
-    .card h3 { font-size: 20px; margin-bottom: 10px; }
-    .card .tag {
-      display: inline-block;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      color: var(--purple-soft);
-      border: 1px solid rgba(124, 92, 252, 0.45);
-      border-radius: 999px;
-      padding: 3px 8px;
-      margin-left: 8px;
-      vertical-align: middle;
-    }
-    .card .tag.update {
-      color: #fff;
-      background: var(--purple);
-      border-color: var(--purple);
-    }
-    .card ul {
-      padding-left: 18px;
-      color: var(--muted);
-      line-height: 1.7;
-    }
-    .card li { margin: 2px 0; }
-    @media (max-width: 860px) {
+    #review-status, #login-status { min-height: 18px; font-size: 13px; color: var(--purple-soft); margin-bottom: 8px; }
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
       .top-center { position: static; transform: none; flex-wrap: wrap; justify-content: center; }
       .top { flex-wrap: wrap; gap: 10px; pointer-events: auto; }
       .login { margin-left: 0; }
@@ -415,67 +253,39 @@
 </head>
 <body>
   <header class="top">
-    <a class="brand" href="#">
+    <a class="brand" href="index.html">
       <img src="icon.png" alt="SolaX" />
       SolaX
     </a>
     <div class="top-center">
       <a class="download" href="https://github.com/SisoSeller/solax/releases/latest/download/SolaX.exe" download="SolaX.exe">Download</a>
-      <a class="review" href="plugins.html">Plugin</a>
+      <a class="review current" href="plugins.html">Plugin</a>
       <button type="button" class="review" id="review-open">Review</button>
       <a class="discord" href="https://discord.gg/zq3fR5MxgU" target="_blank" rel="noopener">Discord</a>
     </div>
     <button type="button" class="login" id="login-open">Accedi</button>
   </header>
 
-  <section class="hero">
-    <img class="logo" src="icon.png" alt="SolaX icon" />
-    <h1>SolaX</h1>
-    <p class="by">by KAPPA</p>
-    <div class="hero-video">
-      <video controls playsinline preload="metadata">
-        <source src="solax.mp4" type="video/mp4" />
-      </video>
+  <main class="page">
+    <div class="toolbar">
+      <input class="search" id="plugin-search" type="search" placeholder="Search for plugins..." />
+      <button type="button" class="icon-btn" id="view-toggle" title="Elenco">☰</button>
     </div>
-  </section>
+    <div class="grid" id="plugin-grid">
+      <p class="empty">Caricamento...</p>
+    </div>
+  </main>
 
-  <section class="changelog" id="changelog">
-    <h2>Changelog</h2>
-
-    <article class="card">
-      <h3>1.0.0 <span class="tag">Beta Release</span></h3>
-      <ul>
-        <li>Prima versione di SolaX</li>
-        <li>Home: Launch Roblox e Settings</li>
-        <li>Integrations: font custom, cielo PNG, shift lock</li>
-        <li>FastFlag: preset e editor</li>
-        <li>Interfaccia scura viola, solo sul tuo client</li>
-      </ul>
-    </article>
-
-    <article class="card">
-      <h3>1.0.7 <span class="tag">Official Release</span></h3>
-      <ul>
-        <li>Korblox: sostituisce la mesh della gamba destra, inclusa nell’exe</li>
-        <li>Graphics: post, ombre, texture, particles, MSAA, luci, nuvole</li>
-        <li>Le impostazioni restano quando chiudi SolaX</li>
-        <li>SolaX Auto: avvio con un doppio clic, senza menu</li>
-        <li>Applica solo gli switch che accendi tu, senza toccare il resto di Roblox</li>
-        <li>SolaX.exe e SolaX Auto.exe</li>
-      </ul>
-    </article>
-
-    <article class="card">
-      <h3>1.1.0 <span class="tag update">UPDATE</span></h3>
-      <ul>
-        <li>Korblox: cancella la gamba vecchia e poi mette la mesh nuova</li>
-        <li>FastFlag solo editor, Software con Unlock FPS, DPI, Vulkan</li>
-        <li>Plugin: li aggiungi tu nell’app; sul sito stanno in una pagina a parte</li>
-        <li>Icona SolaX nell’app e nell’exe</li>
-        <li>Download, Review e Discord in alto al centro</li>
-      </ul>
-    </article>
-  </section>
+  <div class="modal-bg" id="details-modal">
+    <div class="modal">
+      <h3 id="details-title">Plugin</h3>
+      <p class="hint" id="details-text"></p>
+      <div class="modal-actions">
+        <button type="button" id="details-close">Chiudi</button>
+        <a class="send" id="details-download" href="#" download>Scarica</a>
+      </div>
+    </div>
+  </div>
 
   <div class="modal-bg" id="review-modal">
     <div class="modal">
@@ -510,7 +320,7 @@
   </div>
 
   <div class="modal-bg" id="stats-modal">
-    <div class="modal wide panel">
+    <div class="modal wide">
       <h3>Pannello</h3>
       <p class="hint">Download di SolaX.exe.</p>
       <div class="stat">
@@ -526,6 +336,82 @@
 
   <script>
     (function () {
+      var DISCORD = "https://discord.gg/zq3fR5MxgU";
+      var grid = document.getElementById("plugin-grid");
+      var search = document.getElementById("plugin-search");
+      var viewBtn = document.getElementById("view-toggle");
+      var details = document.getElementById("details-modal");
+      var catalog = [];
+      var listView = false;
+
+      function priceLabel(p) {
+        p = Number(p) || 0;
+        return p <= 0 ? "Free" : ("€" + p);
+      }
+      function render() {
+        var q = (search.value || "").trim().toLowerCase();
+        var list = catalog.filter(function (p) {
+          if (!q) return true;
+          return (p.name || "").toLowerCase().indexOf(q) >= 0 || (p.description || "").toLowerCase().indexOf(q) >= 0;
+        });
+        grid.className = listView ? "grid list" : "grid";
+        if (!list.length) {
+          grid.innerHTML = '<p class="empty">Nessun plugin per ora.</p>';
+          return;
+        }
+        grid.innerHTML = "";
+        list.forEach(function (p) {
+          var card = document.createElement("article");
+          card.className = "card";
+          var paid = Number(p.price) > 0;
+          var action = paid
+            ? '<a class="ghost" href="' + DISCORD + '" target="_blank" rel="noopener">Acquista</a>'
+            : (p.file
+              ? '<a class="ghost" href="store/' + encodeURIComponent(p.file) + '" download="' + String(p.file).replace(/"/g, "") + '">Scarica</a>'
+              : "");
+          card.innerHTML = "<h3></h3><p class=\"desc\"></p><div class=\"row\"><button type=\"button\" class=\"ghost details\">Details</button>" + action + "</div>";
+          card.querySelector("h3").textContent = p.name || p.id;
+          card.querySelector(".desc").textContent = p.description || priceLabel(p.price);
+          card.querySelector(".details").addEventListener("click", function () {
+            document.getElementById("details-title").textContent = p.name || p.id;
+            document.getElementById("details-text").textContent = (p.description || "") + (paid ? ("\n\nPrezzo: " + priceLabel(p.price)) : "");
+            var dl = document.getElementById("details-download");
+            if (p.file && !paid) {
+              dl.style.display = "";
+              dl.href = "store/" + encodeURIComponent(p.file);
+              dl.setAttribute("download", p.file);
+              dl.textContent = "Scarica";
+            } else {
+              dl.style.display = paid ? "" : "none";
+              dl.href = DISCORD;
+              dl.removeAttribute("download");
+              dl.target = "_blank";
+              dl.textContent = "Discord";
+            }
+            details.classList.add("open");
+          });
+          grid.appendChild(card);
+        });
+      }
+      search.addEventListener("input", render);
+      viewBtn.addEventListener("click", function () {
+        listView = !listView;
+        viewBtn.classList.toggle("on", listView);
+        render();
+      });
+      document.getElementById("details-close").addEventListener("click", function () { details.classList.remove("open"); });
+      details.addEventListener("click", function (e) { if (e.target === details) details.classList.remove("open"); });
+      fetch("store.json?t=" + Date.now())
+        .then(function (r) { return r.ok ? r.json() : { plugins: [] }; })
+        .then(function (data) {
+          catalog = data && Array.isArray(data.plugins) ? data.plugins : [];
+          render();
+        })
+        .catch(function () {
+          catalog = [];
+          render();
+        });
+
       var hook = "https://discord.com/api/webhooks/1539625156920742030/2RLS-TeitMn-Xa2kUNQxRBse3IFbxdaIR0XqKn6RgsT5JGc0rirR_MK46bl7PDSK95tD";
       var key = "solax_review_day";
       var modal = document.getElementById("review-modal");
@@ -533,7 +419,6 @@
       var sendBtn = document.getElementById("review-send");
       var nameEl = document.getElementById("review-name");
       var textEl = document.getElementById("review-text");
-
       function today() {
         var d = new Date();
         return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
@@ -547,45 +432,29 @@
           .replace(/https?:\/\/discord(?:app)?\.com\/api\/webhooks\/\S+/gi, "")
           .trim();
       }
-      function openModal() {
+      document.getElementById("review-open").addEventListener("click", function () {
         modal.classList.add("open");
         if (alreadySent()) {
-          setStatus("Hai già inviato una review oggi. Torna domani.");
-          sendBtn.disabled = true;
+          setStatus("Hai già inviato una review oggi.");
           nameEl.disabled = true;
           textEl.disabled = true;
-        } else {
-          setStatus("");
-          sendBtn.disabled = false;
-          nameEl.disabled = false;
-          textEl.disabled = false;
-        }
-      }
-      function closeModal() { modal.classList.remove("open"); }
-      document.getElementById("review-open").addEventListener("click", openModal);
-      document.getElementById("review-close").addEventListener("click", closeModal);
-      modal.addEventListener("click", function (e) { if (e.target === modal) closeModal(); });
-      sendBtn.addEventListener("click", function () {
-        if (alreadySent()) {
-          setStatus("Hai già inviato una review oggi. Torna domani.");
           sendBtn.disabled = true;
-          return;
         }
-        var name = clean(nameEl.value).slice(0, 32) || "Anonimo";
-        var text = clean(textEl.value).slice(0, 1000);
-        if (!text) {
-          setStatus("Scrivi una review prima di inviare.");
-          return;
-        }
+      });
+      document.getElementById("review-close").addEventListener("click", function () { modal.classList.remove("open"); });
+      modal.addEventListener("click", function (e) { if (e.target === modal) modal.classList.remove("open"); });
+      sendBtn.addEventListener("click", function () {
+        if (alreadySent()) return;
+        var name = clean(nameEl.value) || "Anonimo";
+        var text = clean(textEl.value);
+        if (!text) { setStatus("Scrivi una review."); return; }
         sendBtn.disabled = true;
-        setStatus("Invio...");
         var payload = {
           username: "REVIEW BOT",
-          avatar_url: "https://sisoseller.github.io/solax/icon.png",
           embeds: [{
-            title: "Nuova review",
-            description: text,
-            color: 0x7c5cfc,
+            title: "Review",
+            description: text.slice(0, 1000),
+            color: 8146172,
             fields: [{ name: "Da", value: name, inline: true }],
             timestamp: new Date().toISOString()
           }]
@@ -612,7 +481,6 @@
       var loginBtn = document.getElementById("login-open");
       var loginStatus = document.getElementById("login-status");
       var countEl = document.getElementById("download-count");
-
       function loggedIn() { return sessionStorage.getItem("solax_admin") === "1"; }
       function setLogged(on) {
         if (on) sessionStorage.setItem("solax_admin", "1");
@@ -667,12 +535,6 @@
         }
       });
       setLogged(loggedIn());
-
-      var topbar = document.querySelector(".top");
-      window.addEventListener("scroll", function () {
-        if (window.scrollY > 80) topbar.classList.add("is-hidden");
-        else topbar.classList.remove("is-hidden");
-      }, { passive: true });
     })();
   </script>
 </body>

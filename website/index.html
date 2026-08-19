@@ -421,7 +421,7 @@
     </a>
     <div class="top-center">
       <a class="download" href="https://github.com/SisoSeller/solax/releases/latest/download/SolaX.exe" download="SolaX.exe">Download</a>
-      <a class="review" href="#store">Plugins</a>
+      <a class="review" href="plugins.html">Plugin</a>
       <button type="button" class="review" id="review-open">Review</button>
       <a class="discord" href="https://discord.gg/zq3fR5MxgU" target="_blank" rel="noopener">Discord</a>
     </div>
@@ -470,20 +470,11 @@
       <ul>
         <li>Korblox: cancella la gamba vecchia e poi mette la mesh nuova</li>
         <li>FastFlag solo editor, Software con Unlock FPS, DPI, Vulkan</li>
-        <li>Plugin: li aggiungi tu, non sono dentro l’app</li>
-        <li>Store sul sito: tutti vedono i plugin, solo Accedi può pubblicarli (Free–€20)</li>
+        <li>Plugin: li aggiungi tu nell’app; sul sito stanno in una pagina a parte</li>
         <li>Icona SolaX nell’app e nell’exe</li>
         <li>Download, Review e Discord in alto al centro</li>
       </ul>
     </article>
-  </section>
-
-  <section class="store" id="store">
-    <h2>Plugins</h2>
-    <p class="intro">File .bat da aggiungere in SolaX → Plugin. Free si scarica qui; gli altri si acquistano su Discord.</p>
-    <div class="store-grid" id="store-grid">
-      <p class="store-empty">Caricamento...</p>
-    </div>
   </section>
 
   <div class="modal-bg" id="review-modal">
@@ -505,7 +496,7 @@
   <div class="modal-bg" id="login-modal">
     <div class="modal">
       <h3>Accedi</h3>
-      <p class="hint">Pannello download e plugin SolaX.</p>
+      <p class="hint">Pannello download SolaX.</p>
       <label for="login-user">Utente</label>
       <input id="login-user" maxlength="32" autocomplete="username" />
       <label for="login-pass">Password</label>
@@ -521,33 +512,10 @@
   <div class="modal-bg" id="stats-modal">
     <div class="modal wide panel">
       <h3>Pannello</h3>
-      <p class="hint">Download dell’app e plugin visibili a tutti.</p>
+      <p class="hint">Download di SolaX.exe.</p>
       <div class="stat">
         <div class="num" id="download-count">…</div>
         <div class="lbl">persone hanno scaricato SolaX.exe</div>
-      </div>
-      <div class="panel-block">
-        <h4>Aggiungi plugin</h4>
-        <p class="hint">Solo da qui. Free: il .bat va online per tutti. Da €1 a €20: si vede il prezzo, il file lo mandi tu su Discord.</p>
-        <label for="gh-token">Token GitHub</label>
-        <input id="gh-token" type="password" autocomplete="off" placeholder="ghp_… solo questa sessione" />
-        <p class="hint"><a href="https://github.com/settings/tokens/new?scopes=repo&amp;description=SolaX%20store" target="_blank" rel="noopener" style="color:#b794f6">Crea un token</a> con permesso repo su SisoSeller/solax. Non resta nel sito.</p>
-        <label for="plugin-name">Nome</label>
-        <input id="plugin-name" maxlength="48" placeholder="ALL DAY" />
-        <label for="plugin-desc">Descrizione</label>
-        <textarea id="plugin-desc" maxlength="280" placeholder="Cosa fa questo plugin" style="min-height:72px"></textarea>
-        <label for="plugin-price">Prezzo</label>
-        <select id="plugin-price"></select>
-        <label for="plugin-file">File .bat (obbligatorio se Free)</label>
-        <input id="plugin-file" type="file" accept=".bat" />
-        <p id="plugin-status"></p>
-        <div class="modal-actions">
-          <button type="button" class="send" id="plugin-add">Pubblica</button>
-        </div>
-      </div>
-      <div class="panel-block">
-        <h4>Plugin online</h4>
-        <div id="admin-plugins"></div>
       </div>
       <div class="modal-actions">
         <button type="button" id="stats-logout">Esci</button>
@@ -672,7 +640,6 @@
         if (loggedIn()) {
           statsModal.classList.add("open");
           loadDownloads();
-          loadStore();
           return;
         }
         loginStatus.textContent = "";
@@ -695,285 +662,11 @@
           loginModal.classList.remove("open");
           statsModal.classList.add("open");
           loadDownloads();
-          loadStore();
         } else {
           loginStatus.textContent = "Credenziali non valide.";
         }
       });
       setLogged(loggedIn());
-
-      var REPO = "SisoSeller/solax";
-      var DISCORD = "https://discord.gg/zq3fR5MxgU";
-      var priceEl = document.getElementById("plugin-price");
-      var tokenEl = document.getElementById("gh-token");
-      var pluginStatus = document.getElementById("plugin-status");
-      var storeGrid = document.getElementById("store-grid");
-      var adminList = document.getElementById("admin-plugins");
-      var catalog = { plugins: [] };
-
-      for (var n = 0; n <= 20; n += 1) {
-        var opt = document.createElement("option");
-        opt.value = String(n);
-        opt.textContent = n === 0 ? "Free" : ("€" + n);
-        priceEl.appendChild(opt);
-      }
-      tokenEl.value = sessionStorage.getItem("solax_gh_token") || "";
-      tokenEl.addEventListener("input", function () {
-        var t = tokenEl.value.trim();
-        if (t) sessionStorage.setItem("solax_gh_token", t);
-        else sessionStorage.removeItem("solax_gh_token");
-      });
-
-      function priceLabel(p) {
-        p = Number(p) || 0;
-        return p <= 0 ? "Free" : ("€" + p);
-      }
-      function slugify(name) {
-        return String(name || "")
-          .toLowerCase()
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "")
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/^-+|-+$/g, "")
-          .slice(0, 40) || "plugin";
-      }
-      function toB64(text) {
-        return btoa(unescape(encodeURIComponent(text)));
-      }
-      function ghToken() {
-        return (tokenEl.value || sessionStorage.getItem("solax_gh_token") || "").trim();
-      }
-      function ghHeaders() {
-        return {
-          Accept: "application/vnd.github+json",
-          Authorization: "Bearer " + ghToken(),
-          "X-GitHub-Api-Version": "2022-11-28"
-        };
-      }
-      function ghGet(path) {
-        return fetch("https://api.github.com/repos/" + REPO + "/contents/" + path + "?ref=main", {
-          headers: ghHeaders()
-        }).then(function (r) {
-          return r.json().then(function (j) {
-            if (!r.ok) throw new Error(j.message || ("GitHub " + r.status));
-            return j;
-          });
-        });
-      }
-      function ghPut(path, content, message, sha) {
-        var body = { message: message, content: content, branch: "main" };
-        if (sha) body.sha = sha;
-        return fetch("https://api.github.com/repos/" + REPO + "/contents/" + path, {
-          method: "PUT",
-          headers: Object.assign({ "Content-Type": "application/json" }, ghHeaders()),
-          body: JSON.stringify(body)
-        }).then(function (r) {
-          return r.json().then(function (j) {
-            if (!r.ok) throw new Error(j.message || ("GitHub " + r.status));
-            return j;
-          });
-        });
-      }
-      function ghDel(path, sha, message) {
-        return fetch("https://api.github.com/repos/" + REPO + "/contents/" + path, {
-          method: "DELETE",
-          headers: Object.assign({ "Content-Type": "application/json" }, ghHeaders()),
-          body: JSON.stringify({ message: message, sha: sha, branch: "main" })
-        }).then(function (r) {
-          return r.json().then(function (j) {
-            if (!r.ok) throw new Error(j.message || ("GitHub " + r.status));
-            return j;
-          });
-        });
-      }
-      function renderStore() {
-        var list = catalog.plugins || [];
-        if (!list.length) {
-          storeGrid.innerHTML = '<p class="store-empty">Nessun plugin per ora.</p>';
-          return;
-        }
-        storeGrid.innerHTML = "";
-        list.forEach(function (p) {
-          var card = document.createElement("article");
-          card.className = "store-card";
-          var paid = Number(p.price) > 0;
-          var action = paid
-            ? '<a class="off" href="' + DISCORD + '" target="_blank" rel="noopener">Acquista</a>'
-            : (p.file
-              ? '<a href="store/' + encodeURIComponent(p.file) + '" download="' + String(p.file).replace(/"/g, "") + '">Scarica</a>'
-              : "");
-          card.innerHTML =
-            "<h3></h3><p class=\"desc\"></p><div class=\"meta\"><span class=\"price" +
-            (paid ? " paid" : "") + "\"></span>" + action + "</div>";
-          card.querySelector("h3").textContent = p.name || p.id;
-          card.querySelector(".desc").textContent = p.description || "";
-          card.querySelector(".price").textContent = priceLabel(p.price);
-          storeGrid.appendChild(card);
-        });
-      }
-      function renderAdmin() {
-        var list = catalog.plugins || [];
-        if (!list.length) {
-          adminList.innerHTML = '<p class="store-empty">Nessun plugin pubblicato.</p>';
-          return;
-        }
-        adminList.innerHTML = "";
-        list.forEach(function (p) {
-          var row = document.createElement("div");
-          row.className = "admin-plugin";
-          row.innerHTML = "<div><strong></strong><span></span></div><button type=\"button\">Rimuovi</button>";
-          row.querySelector("strong").textContent = p.name || p.id;
-          row.querySelector("span").textContent = priceLabel(p.price);
-          row.querySelector("button").addEventListener("click", function () { removePlugin(p); });
-          adminList.appendChild(row);
-        });
-      }
-      function loadStore() {
-        return fetch("store.json?t=" + Date.now())
-          .then(function (r) { return r.ok ? r.json() : { plugins: [] }; })
-          .then(function (data) {
-            catalog = data && Array.isArray(data.plugins) ? data : { plugins: [] };
-            renderStore();
-            renderAdmin();
-          })
-          .catch(function () {
-            catalog = { plugins: [] };
-            renderStore();
-            renderAdmin();
-          });
-      }
-      function saveCatalog(message) {
-        var json = JSON.stringify({ plugins: catalog.plugins }, null, 2);
-        var b64 = toB64(json);
-        function one(path) {
-          return ghGet(path).then(function (f) {
-            return ghPut(path, b64, message, f.sha);
-          }).catch(function () {
-            return ghPut(path, b64, message);
-          });
-        }
-        return one("docs/store.json").then(function () {
-          return one("website/store.json");
-        });
-      }
-      function putBat(fileName, text, message) {
-        var b64 = toB64(text);
-        function one(path) {
-          return ghGet(path).then(function (f) {
-            return ghPut(path, b64, message, f.sha);
-          }).catch(function () {
-            return ghPut(path, b64, message);
-          });
-        }
-        return one("docs/store/" + fileName).then(function () {
-          return one("website/store/" + fileName);
-        });
-      }
-      function delBat(fileName, message) {
-        function one(path) {
-          return ghGet(path).then(function (f) {
-            return ghDel(path, f.sha, message);
-          }).catch(function () { return null; });
-        }
-        return one("docs/store/" + fileName).then(function () {
-          return one("website/store/" + fileName);
-        });
-      }
-      function setPluginStatus(msg) { pluginStatus.textContent = msg || ""; }
-
-      document.getElementById("plugin-add").addEventListener("click", function () {
-        if (!loggedIn()) return;
-        var token = ghToken();
-        if (!token) {
-          setPluginStatus("Incolla il token GitHub per pubblicare.");
-          return;
-        }
-        var name = document.getElementById("plugin-name").value.trim().slice(0, 48);
-        var desc = document.getElementById("plugin-desc").value.trim().slice(0, 280);
-        var price = Math.max(0, Math.min(20, Number(priceEl.value) || 0));
-        var fileInput = document.getElementById("plugin-file");
-        var file = fileInput.files && fileInput.files[0];
-        if (!name) {
-          setPluginStatus("Scrivi un nome.");
-          return;
-        }
-        var id = slugify(name);
-        var exists = (catalog.plugins || []).some(function (p) { return p.id === id; });
-        if (exists) {
-          setPluginStatus("Esiste già un plugin con questo nome.");
-          return;
-        }
-        if (price === 0 && !file) {
-          setPluginStatus("Per Free serve un file .bat.");
-          return;
-        }
-        if (file && !/\.bat$/i.test(file.name)) {
-          setPluginStatus("Solo file .bat.");
-          return;
-        }
-        if (file && file.size > 200 * 1024) {
-          setPluginStatus("File troppo grande (max 200 KB).");
-          return;
-        }
-        var btn = document.getElementById("plugin-add");
-        btn.disabled = true;
-        setPluginStatus("Pubblicazione...");
-        var plugin = {
-          id: id,
-          name: name,
-          description: desc,
-          price: price,
-          added: new Date().toISOString()
-        };
-        var work = Promise.resolve();
-        if (price === 0 && file) {
-          plugin.file = id + ".bat";
-          work = file.text().then(function (text) {
-            return putBat(plugin.file, text, "store: add " + plugin.file);
-          });
-        }
-        work.then(function () {
-          catalog.plugins = (catalog.plugins || []).concat([plugin]);
-          return saveCatalog("store: add " + name);
-        }).then(function () {
-          document.getElementById("plugin-name").value = "";
-          document.getElementById("plugin-desc").value = "";
-          fileInput.value = "";
-          priceEl.value = "0";
-          renderStore();
-          renderAdmin();
-          setPluginStatus("Pubblicato. Tra circa un minuto lo vedono tutti.");
-        }).catch(function (err) {
-          catalog.plugins = (catalog.plugins || []).filter(function (p) { return p.id !== id; });
-          setPluginStatus(err && err.message ? err.message : "Pubblicazione non riuscita.");
-        }).then(function () {
-          btn.disabled = false;
-        });
-      });
-
-      function removePlugin(plugin) {
-        if (!loggedIn() || !plugin) return;
-        if (!ghToken()) {
-          setPluginStatus("Incolla il token GitHub per rimuovere.");
-          return;
-        }
-        if (!window.confirm("Rimuovere " + (plugin.name || plugin.id) + "?")) return;
-        setPluginStatus("Rimozione...");
-        var done = plugin.file ? delBat(plugin.file, "store: remove " + plugin.file) : Promise.resolve();
-        done.then(function () {
-          catalog.plugins = (catalog.plugins || []).filter(function (p) { return p.id !== plugin.id; });
-          return saveCatalog("store: remove " + plugin.name);
-        }).then(function () {
-          renderStore();
-          renderAdmin();
-          setPluginStatus("Rimosso. Tra circa un minuto sparisce per tutti.");
-        }).catch(function (err) {
-          setPluginStatus(err && err.message ? err.message : "Rimozione non riuscita.");
-          loadStore();
-        });
-      }
-
-      loadStore();
 
       var topbar = document.querySelector(".top");
       window.addEventListener("scroll", function () {
