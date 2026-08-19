@@ -18,7 +18,6 @@ import roblox_headless as rh
 import roblox_korblox as rk
 import roblox_mods as rm
 import roblox_plugins as rp
-import roblox_stretch as rst
 
 VERSION = "1.1.0"
 FR_PRIVATE = 0x10
@@ -269,10 +268,6 @@ class App(ctk.CTk):
         self.use_sky_var = ctk.BooleanVar(value=bool(cfg.get("use_custom_sky", False)))
         self.use_shift_var = ctk.BooleanVar(value=bool(cfg.get("use_shift_lock", False)))
         self.use_korblox_var = ctk.BooleanVar(value=bool(cfg.get("use_korblox", False)))
-        self.use_stretch_var = ctk.BooleanVar(value=bool(cfg.get("use_stretch", False)))
-        self.stretch_preset_var = ctk.StringVar(value=str(cfg.get("stretch_preset") or "4:3"))
-        if self.stretch_preset_var.get() not in rst.PRESET_LABELS:
-            self.stretch_preset_var.set("4:3")
         self.enabled_plugins: list[str] = [
             str(name) for name in (cfg.get("enabled_plugins") or []) if str(name).lower().endswith(".bat")
         ]
@@ -620,7 +615,7 @@ class App(ctk.CTk):
             parent,
             "\uE710",
             "Integrations",
-            "Font, cielo, shift lock e stretched — solo su Roblox",
+            "Font, cielo e shift lock — solo su Roblox",
         )
 
         font_card = self._card(parent)
@@ -704,32 +699,6 @@ class App(ctk.CTk):
             self.pick_shift_lock,
         )
         self.shift_name_label, self.shift_preview_label = self.shift_row
-
-        stretch_card = self._card(parent)
-        self._switch_row(
-            stretch_card,
-            "Stretched",
-            "Schiaccia solo la finestra di Roblox. Windows resta alla risoluzione normale.",
-            self.use_stretch_var,
-        )
-        preset_row = ctk.CTkFrame(stretch_card, fg_color="transparent")
-        preset_row.pack(fill="x", pady=(8, 0))
-        ctk.CTkLabel(
-            preset_row,
-            text="Preset",
-            font=ctk.CTkFont(family="Segoe UI", size=13),
-            text_color=TEXT,
-        ).pack(side="left")
-        ctk.CTkOptionMenu(
-            preset_row,
-            values=rst.PRESET_LABELS,
-            variable=self.stretch_preset_var,
-            width=140,
-            fg_color="#1f1f1f",
-            button_color=PURPLE_BTN,
-            button_hover_color=PURPLE_BTN_HOVER,
-            dropdown_fg_color=SURFACE,
-        ).pack(side="right")
 
     def _png_picker_row(self, parent, path: Path | None, button_text: str, command):
         row = ctk.CTkFrame(parent, fg_color="transparent")
@@ -1373,8 +1342,7 @@ class App(ctk.CTk):
                 "use_custom_font": bool(self.use_font_var.get()),
                 "use_custom_sky": bool(self.use_sky_var.get()),
                 "use_shift_lock": bool(self.use_shift_var.get()),
-                "use_stretch": bool(self.use_stretch_var.get()),
-                "stretch_preset": self.stretch_preset_var.get() if self.stretch_preset_var.get() in rst.PRESET_LABELS else "4:3",
+                "use_stretch": False,
                 "last_font": str(self.selected_font) if self.selected_font else cfg.get("last_font"),
                 "last_font_name": self.selected_family or cfg.get("last_font_name"),
                 "sky_png": str(self.sky_png) if self.sky_png else cfg.get("sky_png"),
@@ -1413,8 +1381,6 @@ class App(ctk.CTk):
             self.use_sky_var,
             self.use_shift_var,
             self.use_korblox_var,
-            self.use_stretch_var,
-            self.stretch_preset_var,
             self.test_mode_var,
             self.unlock_fps_var,
             self.fps_var,
@@ -1519,8 +1485,6 @@ class App(ctk.CTk):
         use_sky = bool(cfg.get("use_custom_sky"))
         use_shift = bool(cfg.get("use_shift_lock"))
         use_korblox = bool(cfg.get("use_korblox"))
-        use_stretch = bool(cfg.get("use_stretch"))
-        stretch_preset = str(cfg.get("stretch_preset") or "4:3")
         enabled_plugins = list(cfg.get("enabled_plugins") or [])
         sky_png = self.sky_png
         shift_png = self.shift_png
@@ -1571,7 +1535,6 @@ class App(ctk.CTk):
                     step("Korblox", lambda: rk.apply_korblox(install))
                 else:
                     step("Korblox", lambda: rk.restore_korblox(install))
-                rst.stop_stretch_watcher()
                 if enabled_plugins:
                     plugin_warns = rp.run_plugins(enabled_plugins, cwd=install.version_dir)
                     warnings.extend(plugin_warns)
@@ -1588,8 +1551,6 @@ class App(ctk.CTk):
                 if launch:
                     rf.launch_roblox(install)
                     launched = True
-                    if use_stretch:
-                        rst.start_stretch_watcher(stretch_preset)
             except Exception as exc:
                 fatal = exc
                 rf.log(f"save/launch: {exc}")
@@ -1651,12 +1612,6 @@ class App(ctk.CTk):
 
 
 if __name__ == "__main__":
-    if "--stretch-watch" in sys.argv:
-        idx = sys.argv.index("--stretch-watch")
-        preset = sys.argv[idx + 1] if idx + 1 < len(sys.argv) else "4:3"
-        rst.run_stretch_watch(preset)
-        raise SystemExit(0)
-
     def is_auto_launch() -> bool:
         if "--auto" in sys.argv:
             return True
