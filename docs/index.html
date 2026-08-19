@@ -31,11 +31,15 @@
       top: 0;
       left: 0;
       right: 0;
-      z-index: 10;
+      z-index: 50;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 22px 32px;
+      padding: 18px 24px;
+      pointer-events: none;
+    }
+    .top a {
+      pointer-events: auto;
     }
     .brand {
       display: flex;
@@ -52,6 +56,10 @@
       border-radius: 10px;
     }
     .top-actions {
+      position: fixed;
+      top: 18px;
+      right: 24px;
+      z-index: 60;
       display: flex;
       align-items: center;
       gap: 10px;
@@ -59,16 +67,24 @@
     .download {
       display: inline-flex;
       align-items: center;
-      padding: 10px 16px;
+      justify-content: center;
+      padding: 12px 20px;
       border-radius: 10px;
-      color: #fff;
+      color: #fff !important;
       text-decoration: none;
       background: var(--purple);
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 700;
+      box-shadow: 0 8px 24px rgba(124, 92, 252, 0.55);
+      white-space: nowrap;
     }
     .download:hover {
       background: #8f74ff;
+    }
+    .download-hero {
+      margin-top: 28px;
+      padding: 16px 36px;
+      font-size: 18px;
     }
     .discord {
       display: inline-flex;
@@ -166,10 +182,8 @@
       SolaX
     </a>
     <div class="top-actions">
-      <a class="download" href="https://github.com/SisoSeller/solax/releases/latest/download/SolaX.exe">Download</a>
-      <a class="discord" href="https://discord.gg/zq3fR5MxgU" target="_blank" rel="noopener">
-        Discord
-      </a>
+      <a class="download" href="https://github.com/SisoSeller/solax/releases/latest/download/SolaX.exe" download="SolaX.exe">Download</a>
+      <a class="discord" href="https://discord.gg/zq3fR5MxgU" target="_blank" rel="noopener">Discord</a>
     </div>
   </header>
 
@@ -177,6 +191,7 @@
     <img class="logo" src="icon.png" alt="SolaX icon" />
     <h1>SolaX</h1>
     <p class="by">by KAPPA</p>
+    <a class="download download-hero" href="https://github.com/SisoSeller/solax/releases/latest/download/SolaX.exe" download="SolaX.exe">Download</a>
   </section>
 
   <section class="changelog" id="changelog">
