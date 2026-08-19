@@ -488,7 +488,7 @@ class App(ctk.CTk):
         self.software_page = ctk.CTkScrollableFrame(content, fg_color=BG, corner_radius=0)
         self.graphics_page = ctk.CTkScrollableFrame(content, fg_color=BG, corner_radius=0)
         self.premium_page = ctk.CTkFrame(content, fg_color=BG)
-        self.plugin_page = ctk.CTkScrollableFrame(content, fg_color=BG, corner_radius=0)
+        self.plugin_page = ctk.CTkFrame(content, fg_color=BG)
         self._build_integrations(self.integrations_page)
         self._build_fastflag(self.fastflag_page)
         self._build_software(self.software_page)
@@ -1014,27 +1014,29 @@ class App(ctk.CTk):
             parent,
             "\uE8A5",
             "Plugin",
-            "Aggiungi tweak .bat. SolaX li avvia al Save and Launch, prima di aprire Roblox.",
+            "Trascina un plugin tuo. Nell’app non ce n’è nessuno finché non lo aggiungi.",
         )
-        card = self._card(parent)
-        ctk.CTkLabel(
-            card,
-            text="Solo file .bat. Vengono copiati in AppData\\SolaX\\plugins.",
-            font=ctk.CTkFont(family="Segoe UI", size=12),
-            text_color=MUTED,
-            anchor="w",
-        ).pack(fill="x", pady=(0, 10))
-        FooterButton(card, "Add file .bat", self._add_plugin_file, primary=True, width=140).pack(anchor="w")
-        self.plugin_list = ctk.CTkScrollableFrame(
-            card,
-            height=280,
-            fg_color="#1f1f1f",
+        tools = ctk.CTkFrame(parent, fg_color="transparent")
+        tools.pack(fill="x", padx=28, pady=(4, 8))
+        self.plugin_search_var = ctk.StringVar(value="")
+        self.plugin_search_var.trace_add("write", lambda *_: self._rebuild_plugin_list())
+        search = ctk.CTkEntry(
+            tools,
+            textvariable=self.plugin_search_var,
+            placeholder_text="Search for plugins…",
+            height=36,
             corner_radius=8,
-            border_width=1,
+            fg_color="#1f1f1f",
             border_color=BORDER,
+            text_color=TEXT,
         )
-        self.plugin_list.pack(fill="x", pady=(12, 0))
+        search.pack(side="left", fill="x", expand=True)
+        FooterButton(tools, "Add plugin", self._add_plugin_file, primary=True, width=120).pack(side="right", padx=(10, 0))
+
+        self.plugin_list = ctk.CTkScrollableFrame(parent, fg_color=BG, corner_radius=0)
+        self.plugin_list.pack(fill="both", expand=True, padx=20, pady=(0, 16))
         self._rebuild_plugin_list()
+        self.after(300, self._hook_plugin_drop)
 
     def _plugin_enabled(self, name: str) -> bool:
         return name in self.enabled_plugins
@@ -1047,15 +1049,9 @@ class App(ctk.CTk):
             self.enabled_plugins = [item for item in self.enabled_plugins if item != name]
         self._persist_ui()
 
-    def _add_plugin_file(self):
-        path = filedialog.askopenfilename(
-            title="Scegli un plugin .bat",
-            filetypes=[("Batch", "*.bat")],
-        )
-        if not path:
-            return
+    def _import_plugin_path(self, path: Path):
         try:
-            dest = rp.add_plugin(Path(path))
+            dest = rp.add_plugin(path)
         except Exception as exc:
             messagebox.showerror("Plugin", str(exc))
             return
@@ -1064,11 +1060,45 @@ class App(ctk.CTk):
         self._rebuild_plugin_list()
         self._persist_ui()
 
+    def _add_plugin_file(self):
+        path = filedialog.askopenfilename(
+            title="Scegli un plugin .bat",
+            filetypes=[("Plugin", "*.bat")],
+        )
+        if path:
+            self._import_plugin_path(Path(path))
+
     def _remove_plugin_file(self, name: str):
         rp.remove_plugin(name)
         self.enabled_plugins = [item for item in self.enabled_plugins if item != name]
         self._rebuild_plugin_list()
         self._persist_ui()
+
+    def _plugin_details(self, path: Path):
+        messagebox.showinfo(
+            rp.display_name(path),
+            f"{rp.display_name(path)}\n\n{rp.description(path)}\n\nFile: {path.name}",
+        )
+
+    def _hook_plugin_drop(self):
+        if getattr(self, "_plugin_drop_hooked", False):
+            return
+        try:
+            import windnd
+        except ImportError:
+            return
+        try:
+            windnd.hook_dropfiles(self.plugin_page, func=self._on_plugin_drop)
+            self._plugin_drop_hooked = True
+        except Exception:
+            pass
+
+    def _on_plugin_drop(self, files):
+        for item in files:
+            raw = item.decode("utf-8", errors="ignore") if isinstance(item, (bytes, bytearray)) else str(item)
+            path = Path(raw)
+            if path.suffix.lower() == ".bat" and path.is_file():
+                self._import_plugin_path(path)
 
     def _rebuild_plugin_list(self):
         if not hasattr(self, "plugin_list"):
@@ -1078,20 +1108,59 @@ class App(ctk.CTk):
         plugins = rp.list_plugins()
         known = {p.name for p in plugins}
         self.enabled_plugins = [name for name in self.enabled_plugins if name in known]
+        query = (self.plugin_search_var.get() if hasattr(self, "plugin_search_var") else "").strip().lower()
+        if query:
+            plugins = [p for p in plugins if query in rp.display_name(p).lower() or query in p.name.lower()]
         if not plugins:
+            empty = ctk.CTkFrame(self.plugin_list, fg_color=SURFACE, corner_radius=12, border_width=1, border_color=BORDER)
+            empty.pack(fill="both", expand=True, padx=8, pady=24)
             ctk.CTkLabel(
-                self.plugin_list,
-                text="Nessun plugin. Aggiungi un file .bat.",
+                empty,
+                text="Nessun plugin",
+                font=ctk.CTkFont(family="Segoe UI Semibold", size=18),
+                text_color=TEXT,
+            ).pack(pady=(36, 6))
+            ctk.CTkLabel(
+                empty,
+                text="Trascina qui un file .bat (es. ALL DAY) oppure premi Add plugin.\nI plugin non sono dentro SolaX: li aggiungi tu.",
+                font=ctk.CTkFont(family="Segoe UI", size=13),
                 text_color=MUTED,
-                font=ctk.CTkFont(family="Segoe UI", size=12),
-            ).pack(pady=14)
+                justify="center",
+            ).pack(pady=(0, 36), padx=24)
+            empty.bind("<Button-1>", lambda _e: self._add_plugin_file())
             return
-        for path in plugins:
-            row = ctk.CTkFrame(self.plugin_list, fg_color="transparent")
-            row.pack(fill="x", pady=4)
+        grid = ctk.CTkFrame(self.plugin_list, fg_color="transparent")
+        grid.pack(fill="both", expand=True)
+        grid.grid_columnconfigure(0, weight=1)
+        grid.grid_columnconfigure(1, weight=1)
+        for index, path in enumerate(plugins):
+            card = ctk.CTkFrame(grid, fg_color=SURFACE, corner_radius=12, border_width=1, border_color=BORDER)
+            card.grid(row=index // 2, column=index % 2, sticky="nsew", padx=8, pady=8)
+            inner = ctk.CTkFrame(card, fg_color="transparent")
+            inner.pack(fill="both", expand=True, padx=16, pady=14)
+            ctk.CTkLabel(
+                inner,
+                text=rp.display_name(path),
+                font=ctk.CTkFont(family="Segoe UI Semibold", size=16),
+                text_color=TEXT,
+                anchor="w",
+            ).pack(fill="x")
+            ctk.CTkLabel(
+                inner,
+                text=rp.description(path),
+                font=ctk.CTkFont(family="Segoe UI", size=12),
+                text_color=MUTED,
+                anchor="w",
+                justify="left",
+                wraplength=280,
+            ).pack(fill="x", pady=(6, 12))
+            bottom = ctk.CTkFrame(inner, fg_color="transparent")
+            bottom.pack(fill="x", side="bottom")
+            FooterButton(bottom, "Details", lambda p=path: self._plugin_details(p), width=84).pack(side="left")
+            FooterButton(bottom, "Remove", lambda n=path.name: self._remove_plugin_file(n), width=84).pack(side="left", padx=(8, 0))
             var = ctk.BooleanVar(value=self._plugin_enabled(path.name))
             ctk.CTkSwitch(
-                row,
+                bottom,
                 text="",
                 variable=var,
                 command=lambda n=path.name, v=var: self._toggle_plugin(n, v),
@@ -1100,15 +1169,7 @@ class App(ctk.CTk):
                 fg_color="#3a3a3a",
                 width=44,
                 switch_width=36,
-            ).pack(side="left")
-            ctk.CTkLabel(
-                row,
-                text=path.name,
-                font=ctk.CTkFont(family="Segoe UI Semibold", size=13),
-                text_color=TEXT,
-                anchor="w",
-            ).pack(side="left", fill="x", expand=True, padx=(8, 8))
-            FooterButton(row, "Remove", lambda n=path.name: self._remove_plugin_file(n), width=80).pack(side="right")
+            ).pack(side="right")
 
     def show_home(self):
         self._persist_ui()

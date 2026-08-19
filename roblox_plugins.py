@@ -15,6 +15,33 @@ def plugins_dir() -> Path:
     return path
 
 
+def display_name(path: Path) -> str:
+    return Path(path).stem.replace("_", " ").strip() or Path(path).name
+
+
+def description(path: Path) -> str:
+    try:
+        lines = Path(path).read_text(encoding="utf-8", errors="ignore").splitlines()
+    except OSError:
+        return "Plugin locale. Si avvia con Save and Launch se è attivo."
+    notes: list[str] = []
+    for line in lines:
+        text = line.strip()
+        if text.lower().startswith("rem "):
+            note = text[4:].strip()
+            if note.lower().startswith("solax plugin"):
+                continue
+            if note.lower().startswith("aggiungilo"):
+                continue
+            if note:
+                notes.append(note)
+        if len(notes) >= 2:
+            break
+    if notes:
+        return " ".join(notes)
+    return "Plugin locale. Si avvia con Save and Launch se è attivo."
+
+
 def list_plugins() -> list[Path]:
     root = plugins_dir()
     return sorted(p for p in root.glob("*.bat") if p.is_file())

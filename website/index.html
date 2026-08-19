@@ -90,7 +90,7 @@
       white-space: nowrap;
     }
     .download:hover { background: #8f74ff; }
-    .review, .login, .plugins {
+    .review, .login {
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -106,7 +106,7 @@
       white-space: nowrap;
       text-decoration: none;
     }
-    .review:hover, .login:hover, .plugins:hover { background: var(--purple); }
+    .review:hover, .login:hover { background: var(--purple); }
     .login { margin-left: auto; z-index: 2; }
     .discord {
       display: inline-flex;
@@ -292,24 +292,7 @@
       color: var(--muted);
       line-height: 1.7;
     }
-    .plugin-list {
-      display: grid;
-      gap: 10px;
-    }
-    .plugin-list a {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 14px;
-      border-radius: 12px;
-      border: 1px solid var(--line);
-      background: #121216;
-      color: var(--text);
-      text-decoration: none;
-      font-size: 14px;
-    }
-    .plugin-list a:hover { border-color: var(--purple); color: var(--purple-soft); }
-    .plugin-list span { color: var(--muted); font-size: 12px; }
+    .card li { margin: 2px 0; }
     @media (max-width: 860px) {
       .top-center { position: static; transform: none; flex-wrap: wrap; justify-content: center; }
       .top { flex-wrap: wrap; gap: 10px; pointer-events: auto; }
@@ -325,7 +308,6 @@
     </a>
     <div class="top-center">
       <a class="download" href="https://github.com/SisoSeller/solax/releases/latest/download/SolaX.exe" download="SolaX.exe">Download</a>
-      <a class="plugins" href="#plugins">Plugins</a>
       <button type="button" class="review" id="review-open">Review</button>
       <a class="discord" href="https://discord.gg/zq3fR5MxgU" target="_blank" rel="noopener">Discord</a>
     </div>
@@ -374,43 +356,10 @@
       <ul>
         <li>Korblox: cancella la gamba vecchia e poi mette la mesh nuova</li>
         <li>FastFlag solo editor, Software con Unlock FPS, DPI, Vulkan</li>
-        <li>Plugin .bat sotto Korblox, avviati al Save and Launch</li>
+        <li>Plugin: li aggiungi tu, non sono dentro l’app</li>
         <li>Icona SolaX nell’app e nell’exe</li>
-        <li>Download, Plugins, Review e Discord in alto al centro</li>
+        <li>Download, Review e Discord in alto al centro</li>
       </ul>
-    </article>
-  </section>
-
-  <section class="changelog" id="plugins">
-    <h2>Plugins</h2>
-    <article class="card">
-      <h3>20 plugin .bat</h3>
-      <p class="hint" style="margin-bottom:14px">Scarica il pack e aggiungili in SolaX → Plugin → Add file .bat, poi Save and Launch.</p>
-      <p style="margin-bottom:16px">
-        <a class="download" href="plugins.zip" download="SolaX-plugins.zip">Download pack</a>
-      </p>
-      <div class="plugin-list">
-        <a href="plugins/01%20Unlock%20FPS%20240.bat" download>01 Unlock FPS 240 <span>.bat</span></a>
-        <a href="plugins/02%20Unlock%20FPS%20360.bat" download>02 Unlock FPS 360 <span>.bat</span></a>
-        <a href="plugins/03%20Unlock%20FPS%201000.bat" download>03 Unlock FPS 1000 <span>.bat</span></a>
-        <a href="plugins/04%20Disable%20DPI%20Scale.bat" download>04 Disable DPI Scale <span>.bat</span></a>
-        <a href="plugins/05%20Prefer%20Vulkan.bat" download>05 Prefer Vulkan <span>.bat</span></a>
-        <a href="plugins/06%20Prefer%20D3D11.bat" download>06 Prefer D3D11 <span>.bat</span></a>
-        <a href="plugins/07%20Disable%20Post%20FX.bat" download>07 Disable Post FX <span>.bat</span></a>
-        <a href="plugins/08%20Disable%20Shadows.bat" download>08 Disable Shadows <span>.bat</span></a>
-        <a href="plugins/09%20Low%20Textures.bat" download>09 Low Textures <span>.bat</span></a>
-        <a href="plugins/10%20Low%20Quality.bat" download>10 Low Quality <span>.bat</span></a>
-        <a href="plugins/11%20Disable%20Particles.bat" download>11 Disable Particles <span>.bat</span></a>
-        <a href="plugins/12%20No%20MSAA.bat" download>12 No MSAA <span>.bat</span></a>
-        <a href="plugins/13%20Low%20Lights.bat" download>13 Low Lights <span>.bat</span></a>
-        <a href="plugins/14%20No%20Clouds.bat" download>14 No Clouds <span>.bat</span></a>
-        <a href="plugins/15%20Gray%20Sky.bat" download>15 Gray Sky <span>.bat</span></a>
-        <a href="plugins/16%20Freeze%20Grass.bat" download>16 Freeze Grass <span>.bat</span></a>
-        <a href="plugins/17%20Alt%20Enter%20Fullscreen.bat" download>17 Alt Enter Fullscreen <span>.bat</span></a>
-        <a href="plugins/18%20Disable%20Gray%20Sky.bat" download>18 Disable Gray Sky <span>.bat</span></a>
-        <a href="plugins/19%20Extra%20Texture%20Override.bat" download>19 Extra Texture Override <span>.bat</span></a>
-        <a href="plugins/20%20Pause%20Voxelizer.bat" download>20 Pause Voxelizer <span>.bat</span></a>
-      </div>
     </article>
   </section>
 

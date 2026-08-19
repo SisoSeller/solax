@@ -3,7 +3,7 @@ from PyInstaller.utils.hooks import collect_all
 
 datas = []
 binaries = []
-hiddenimports = ['PIL._tkinter_finder', 'roblox_fonts', 'roblox_flags', 'roblox_mods', 'roblox_stretch', 'roblox_headless', 'roblox_korblox', 'roblox_plugins']
+hiddenimports = ['PIL._tkinter_finder', 'roblox_fonts', 'roblox_flags', 'roblox_mods', 'roblox_stretch', 'roblox_headless', 'roblox_korblox', 'roblox_plugins', 'windnd']
 tmp_ret = collect_all('customtkinter')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 datas += [('assets/rightleg.mesh', 'assets')]
