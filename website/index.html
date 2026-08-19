@@ -51,6 +51,25 @@
       height: 36px;
       border-radius: 10px;
     }
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .download {
+      display: inline-flex;
+      align-items: center;
+      padding: 10px 16px;
+      border-radius: 10px;
+      color: #fff;
+      text-decoration: none;
+      background: var(--purple);
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .download:hover {
+      background: #8f74ff;
+    }
     .discord {
       display: inline-flex;
       align-items: center;
@@ -146,9 +165,12 @@
       <img src="icon.png" alt="SolaX" />
       SolaX
     </a>
-    <a class="discord" href="https://discord.gg/zq3fR5MxgU" target="_blank" rel="noopener">
-      Discord
-    </a>
+    <div class="top-actions">
+      <a class="download" href="https://github.com/SisoSeller/solax/releases/latest/download/SolaX.exe">Download</a>
+      <a class="discord" href="https://discord.gg/zq3fR5MxgU" target="_blank" rel="noopener">
+        Discord
+      </a>
+    </div>
   </header>
 
   <section class="hero">
