@@ -420,7 +420,7 @@
       SolaX
     </a>
     <div class="top-center">
-      <a class="download" href="https://github.com/SisoSeller/solax/releases/latest/download/SolaX.exe" download="SolaX.exe">Download</a>
+      <a class="download" href="https://github.com/SisoSeller/solax/releases/latest/download/SolaX-Setup.exe" download="SolaX-Setup.exe">Download</a>
       <a class="review" href="plugins.html">Plugin</a>
       <button type="button" class="review" id="review-open">Review</button>
       <a class="discord" href="https://discord.gg/zq3fR5MxgU" target="_blank" rel="noopener">Discord</a>
@@ -484,10 +484,17 @@
     </article>
 
     <article class="card">
-      <h3>1.1.2 <span class="tag update">UPDATE</span></h3>
+      <h3>1.1.2 <span class="tag">Official Release</span></h3>
       <ul>
         <li>ALL DAY è dentro SolaX.exe, senza download a parte</li>
         <li>Si attiva da solo all’avvio: in Plugin puoi spegnerlo</li>
+      </ul>
+    </article>
+
+    <article class="card">
+      <h3>1.1.3 <span class="tag update">UPDATE</span></h3>
+      <ul>
+        <li>Download: SolaX-Setup.exe installa tutti i file, senza errori di pezzi mancanti</li>
       </ul>
     </article>
   </section>
@@ -527,10 +534,10 @@
   <div class="modal-bg" id="stats-modal">
     <div class="modal wide panel">
       <h3>Pannello</h3>
-      <p class="hint">Download di SolaX.exe.</p>
+      <p class="hint">Download di SolaX-Setup.exe.</p>
       <div class="stat">
         <div class="num" id="download-count">…</div>
-        <div class="lbl">persone hanno scaricato SolaX.exe</div>
+        <div class="lbl">persone hanno scaricato SolaX</div>
       </div>
       <div class="modal-actions">
         <button type="button" id="stats-logout">Esci</button>
@@ -642,7 +649,7 @@
             var total = 0;
             (releases || []).forEach(function (rel) {
               (rel.assets || []).forEach(function (asset) {
-                if (String(asset.name).toLowerCase() === "solax.exe") {
+                if (String(asset.name).toLowerCase() === "solax.exe" || String(asset.name).toLowerCase() === "solax-setup.exe") {
                   total += Number(asset.download_count) || 0;
                 }
               });

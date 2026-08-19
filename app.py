@@ -19,7 +19,7 @@ import roblox_korblox as rk
 import roblox_mods as rm
 import roblox_plugins as rp
 
-VERSION = "1.1.2"
+VERSION = "1.1.3"
 FR_PRIVATE = 0x10
 
 BG = "#1a1a1a"

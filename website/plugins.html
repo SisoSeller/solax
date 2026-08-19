@@ -267,7 +267,7 @@
       SolaX
     </a>
     <div class="top-center">
-      <a class="download" href="https://github.com/SisoSeller/solax/releases/latest/download/SolaX.exe" download="SolaX.exe">Download</a>
+      <a class="download" href="https://github.com/SisoSeller/solax/releases/latest/download/SolaX-Setup.exe" download="SolaX-Setup.exe">Download</a>
       <a class="review current" href="plugins.html">Plugin</a>
       <button type="button" class="review" id="review-open">Review</button>
       <a class="discord" href="https://discord.gg/zq3fR5MxgU" target="_blank" rel="noopener">Discord</a>
@@ -331,10 +331,10 @@
   <div class="modal-bg" id="stats-modal">
     <div class="modal wide">
       <h3>Pannello</h3>
-      <p class="hint">Download di SolaX.exe.</p>
+      <p class="hint">Download di SolaX-Setup.exe.</p>
       <div class="stat">
         <div class="num" id="download-count">…</div>
-        <div class="lbl">persone hanno scaricato SolaX.exe</div>
+        <div class="lbl">persone hanno scaricato SolaX</div>
       </div>
       <div class="modal-actions">
         <button type="button" id="stats-logout">Esci</button>
@@ -377,7 +377,7 @@
           var action = paid
             ? '<a class="ghost" href="' + DISCORD + '" target="_blank" rel="noopener">Acquista</a>'
             : (bundled
-              ? '<a class="ghost" href="https://github.com/SisoSeller/solax/releases/latest/download/SolaX.exe">Nell’app</a>'
+              ? '<a class="ghost" href="https://github.com/SisoSeller/solax/releases/latest/download/SolaX-Setup.exe">Nell’app</a>'
               : (p.file
                 ? '<a class="ghost" href="store/' + encodeURIComponent(p.file) + '" download="' + String(p.file).replace(/"/g, "") + '">Scarica</a>'
                 : ""));
@@ -396,7 +396,7 @@
               dl.textContent = "Scarica";
             } else if (p.bundled) {
               dl.style.display = "";
-              dl.href = "https://github.com/SisoSeller/solax/releases/latest/download/SolaX.exe";
+              dl.href = "https://github.com/SisoSeller/solax/releases/latest/download/SolaX-Setup.exe";
               dl.removeAttribute("download");
               dl.textContent = "Download app";
             } else {
@@ -513,7 +513,7 @@
             var total = 0;
             (releases || []).forEach(function (rel) {
               (rel.assets || []).forEach(function (asset) {
-                if (String(asset.name).toLowerCase() === "solax.exe") {
+                if (String(asset.name).toLowerCase() === "solax.exe" || String(asset.name).toLowerCase() === "solax-setup.exe") {
                   total += Number(asset.download_count) || 0;
                 }
               });
