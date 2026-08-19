@@ -171,6 +171,15 @@
       cursor: pointer;
     }
     .ghost:hover { border-color: var(--purple); }
+    .price {
+      margin-left: auto;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--purple-soft);
+      border: 1px solid rgba(124, 92, 252, 0.45);
+      border-radius: 999px;
+      padding: 4px 10px;
+    }
     .empty { color: var(--muted); padding: 48px 8px; }
     .modal-bg {
       display: none;
@@ -369,9 +378,10 @@
             : (p.file
               ? '<a class="ghost" href="store/' + encodeURIComponent(p.file) + '" download="' + String(p.file).replace(/"/g, "") + '">Scarica</a>'
               : "");
-          card.innerHTML = "<h3></h3><p class=\"desc\"></p><div class=\"row\"><button type=\"button\" class=\"ghost details\">Details</button>" + action + "</div>";
+          card.innerHTML = "<h3></h3><p class=\"desc\"></p><div class=\"row\"><button type=\"button\" class=\"ghost details\">Details</button>" + action + "<span class=\"price\"></span></div>";
           card.querySelector("h3").textContent = p.name || p.id;
-          card.querySelector(".desc").textContent = p.description || priceLabel(p.price);
+          card.querySelector(".desc").textContent = p.description || "";
+          card.querySelector(".price").textContent = priceLabel(p.price);
           card.querySelector(".details").addEventListener("click", function () {
             document.getElementById("details-title").textContent = p.name || p.id;
             document.getElementById("details-text").textContent = (p.description || "") + (paid ? ("\n\nPrezzo: " + priceLabel(p.price)) : "");

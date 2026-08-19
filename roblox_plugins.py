@@ -19,6 +19,18 @@ def display_name(path: Path) -> str:
     return Path(path).stem.replace("_", " ").strip() or Path(path).name
 
 
+def _plugin_key(name: str) -> str:
+    return " ".join(Path(name).stem.lower().replace("_", " ").replace("-", " ").split())
+
+
+def is_always_day(name: str) -> bool:
+    return _plugin_key(name) in {"all day", "allday", "sempre giorno"}
+
+
+def has_always_day(enabled: list[str]) -> bool:
+    return any(is_always_day(name) for name in enabled)
+
+
 def description(path: Path) -> str:
     try:
         lines = Path(path).read_text(encoding="utf-8", errors="ignore").splitlines()

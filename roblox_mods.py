@@ -154,7 +154,27 @@ def png_to_sky_tex(
     return _dds_header(size, mip_count) + body
 
 
-def apply_sky(png_path: Path, install: rf.RobloxInstall | None = None) -> rf.RobloxInstall:
+def ensure_day_sky_png() -> Path:
+    path = rf.app_data_dir() / "always_day.png"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    img = Image.new("RGB", (512, 512))
+    pix = img.load()
+    for y in range(512):
+        t = y / 511
+        r = int(72 + (236 - 72) * t)
+        g = int(158 + (214 - 158) * t)
+        b = int(232 + (168 - 232) * t)
+        for x in range(512):
+            pix[x, y] = (r, g, b)
+    img.save(path, "PNG")
+    return path
+
+
+def apply_sky(
+    png_path: Path,
+    install: rf.RobloxInstall | None = None,
+    persist: bool = True,
+) -> rf.RobloxInstall:
     png_path = Path(png_path)
     if not png_path.is_file():
         raise FileNotFoundError(f"PNG del cielo non trovato:\n{png_path}")
@@ -186,11 +206,16 @@ def apply_sky(png_path: Path, install: rf.RobloxInstall | None = None) -> rf.Rob
     if written == 0:
         raise FileNotFoundError("Nessun file cielo .tex trovato in Roblox.")
 
-    cfg = rf.load_config()
-    cfg["sky_png"] = str(png_path)
-    rf.save_config(cfg)
+    if persist:
+        cfg = rf.load_config()
+        cfg["sky_png"] = str(png_path)
+        rf.save_config(cfg)
     rf.log(f"sky: wrote {written} tex from {png_path}")
     return install
+
+
+def apply_always_day(install: rf.RobloxInstall | None = None) -> rf.RobloxInstall:
+    return apply_sky(ensure_day_sky_png(), install, persist=False)
 
 
 def restore_sky(install: rf.RobloxInstall | None = None) -> None:

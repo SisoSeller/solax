@@ -1,1 +1,11 @@
-{"plugins":[]}
+{
+  "plugins": [
+    {
+      "id": "all-day",
+      "name": "ALL DAY",
+      "description": "Gratis. Scaricalo, in SolaX apri Plugin, aggiungilo e attivalo. A ogni Save and Launch il cielo resta giorno sul tuo client.",
+      "price": 0,
+      "file": "ALL DAY.bat"
+    }
+  ]
+}

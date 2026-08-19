@@ -19,7 +19,7 @@ import roblox_korblox as rk
 import roblox_mods as rm
 import roblox_plugins as rp
 
-VERSION = "1.1.0"
+VERSION = "1.1.1"
 FR_PRIVATE = 0x10
 
 BG = "#1a1a1a"
@@ -1581,6 +1581,7 @@ class App(ctk.CTk):
         use_shift = bool(cfg.get("use_shift_lock"))
         use_korblox = bool(cfg.get("use_korblox"))
         enabled_plugins = list(cfg.get("enabled_plugins") or [])
+        use_always_day = rp.has_always_day(enabled_plugins)
         sky_png = self.sky_png
         shift_png = self.shift_png
         fflags = cfg.get("fflags") or {}
@@ -1619,6 +1620,10 @@ class App(ctk.CTk):
                     self.after(0, lambda: self.gray_sky_var.set(False))
                     fflags["gray_sky"] = False
                     step("Cielo", lambda: rm.apply_sky(sky_png, install))
+                elif use_always_day:
+                    self.after(0, lambda: self.gray_sky_var.set(False))
+                    fflags["gray_sky"] = False
+                    step("Cielo", lambda: rm.apply_always_day(install))
                 else:
                     step("Cielo", lambda: rm.restore_sky(install))
                 if use_shift and shift_png:
@@ -1640,7 +1645,7 @@ class App(ctk.CTk):
                         install,
                         custom=custom_flags,
                         previous_custom_keys=old_custom_keys,
-                        disable_gray_sky=bool(use_sky),
+                        disable_gray_sky=bool(use_sky or use_always_day),
                     ),
                 )
                 if launch:
