@@ -1,9 +1,10 @@
-"""Plugin locali: solo file .bat nella cartella plugin di SolaX."""
+"""Plugin locali: .bat in AppData, più quelli già dentro SolaX.exe."""
 
 from __future__ import annotations
 
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import roblox_fonts as rf
@@ -13,6 +14,50 @@ def plugins_dir() -> Path:
     path = rf.app_data_dir() / "plugins"
     path.mkdir(parents=True, exist_ok=True)
     return path
+
+
+def bundled_plugins_dir() -> Path:
+    here = Path(__file__).resolve().parent
+    candidates = [here / "assets" / "plugins"]
+    if getattr(sys, "frozen", False):
+        exe_dir = Path(sys.executable).resolve().parent
+        mei = Path(getattr(sys, "_MEIPASS", exe_dir))
+        candidates = [
+            mei / "assets" / "plugins",
+            exe_dir / "assets" / "plugins",
+            here / "assets" / "plugins",
+        ]
+    for path in candidates:
+        if path.is_dir():
+            return path
+    return candidates[0]
+
+
+def bundled_plugin_names() -> list[str]:
+    root = bundled_plugins_dir()
+    if not root.is_dir():
+        return []
+    return sorted(p.name for p in root.glob("*.bat") if p.is_file())
+
+
+def is_bundled(name: str) -> bool:
+    return Path(name).name in set(bundled_plugin_names())
+
+
+def install_bundled_plugins() -> list[str]:
+    src_root = bundled_plugins_dir()
+    dest_root = plugins_dir()
+    installed: list[str] = []
+    if not src_root.is_dir():
+        return installed
+    for src in sorted(src_root.glob("*.bat")):
+        if not src.is_file():
+            continue
+        dest = dest_root / src.name
+        shutil.copy2(src, dest)
+        installed.append(src.name)
+        rf.log(f"plugin bundled: {dest}")
+    return installed
 
 
 def display_name(path: Path) -> str:
@@ -72,6 +117,8 @@ def add_plugin(src: Path) -> Path:
 
 
 def remove_plugin(name: str) -> None:
+    if is_bundled(name):
+        return
     root = plugins_dir().resolve()
     path = (plugins_dir() / Path(name).name).resolve()
     if path.parent != root or path.suffix.lower() != ".bat":

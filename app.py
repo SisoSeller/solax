@@ -19,7 +19,7 @@ import roblox_korblox as rk
 import roblox_mods as rm
 import roblox_plugins as rp
 
-VERSION = "1.1.1"
+VERSION = "1.1.2"
 FR_PRIVATE = 0x10
 
 BG = "#1a1a1a"
@@ -259,6 +259,7 @@ class App(ctk.CTk):
         self.nav_items: dict[str, SidebarItem] = {}
 
         cfg = rf.load_config()
+        rp.install_bundled_plugins()
         last = cfg.get("last_font")
         if last and Path(last).is_file():
             self.selected_font = Path(last)
@@ -268,9 +269,13 @@ class App(ctk.CTk):
         self.use_sky_var = ctk.BooleanVar(value=bool(cfg.get("use_custom_sky", False)))
         self.use_shift_var = ctk.BooleanVar(value=bool(cfg.get("use_shift_lock", False)))
         self.use_korblox_var = ctk.BooleanVar(value=bool(cfg.get("use_korblox", False)))
+        self.plugin_off: set[str] = {Path(str(name)).name for name in (cfg.get("plugin_off") or [])}
         self.enabled_plugins: list[str] = [
             str(name) for name in (cfg.get("enabled_plugins") or []) if str(name).lower().endswith(".bat")
         ]
+        for name in rp.bundled_plugin_names():
+            if name not in self.plugin_off and name not in self.enabled_plugins:
+                self.enabled_plugins.append(name)
         self.test_mode_var = ctk.BooleanVar(value=bool(cfg.get("test_mode", False)))
         fflags = {**rff.DEFAULT_FFLAGS, **(cfg.get("fflags") or {})}
         self.unlock_fps_var = ctk.BooleanVar(value=bool(fflags.get("unlock_fps", False)))
@@ -1075,8 +1080,10 @@ class App(ctk.CTk):
         if var.get():
             if name not in self.enabled_plugins:
                 self.enabled_plugins.append(name)
+            self.plugin_off.discard(name)
         else:
             self.enabled_plugins = [item for item in self.enabled_plugins if item != name]
+            self.plugin_off.add(name)
         self._persist_ui()
 
     def _import_plugin_path(self, path: Path):
@@ -1099,6 +1106,12 @@ class App(ctk.CTk):
             self._import_plugin_path(Path(path))
 
     def _remove_plugin_file(self, name: str):
+        if rp.is_bundled(name):
+            self.enabled_plugins = [item for item in self.enabled_plugins if item != name]
+            self.plugin_off.add(name)
+            self._rebuild_plugin_list()
+            self._persist_ui()
+            return
         rp.remove_plugin(name)
         self.enabled_plugins = [item for item in self.enabled_plugins if item != name]
         self._rebuild_plugin_list()
@@ -1152,7 +1165,7 @@ class App(ctk.CTk):
             ).pack(pady=(36, 6))
             ctk.CTkLabel(
                 empty,
-                text="Create a New Plugin in basso a destra, oppure trascina un .bat qui.\nScaricali dal sito: tasto accanto alla ricerca.",
+                text="ALL DAY è già dentro SolaX. Altri .bat: Create a New Plugin o trascinali qui.",
                 font=ctk.CTkFont(family="Segoe UI", size=13),
                 text_color=MUTED,
                 justify="center",
@@ -1189,7 +1202,8 @@ class App(ctk.CTk):
             bottom = ctk.CTkFrame(inner, fg_color="transparent")
             bottom.pack(fill="x", side="bottom")
             FooterButton(bottom, "Details", lambda p=path: self._plugin_details(p), width=84).pack(side="left")
-            FooterButton(bottom, "Remove", lambda n=path.name: self._remove_plugin_file(n), width=84).pack(side="left", padx=(8, 0))
+            if not rp.is_bundled(path.name):
+                FooterButton(bottom, "Remove", lambda n=path.name: self._remove_plugin_file(n), width=84).pack(side="left", padx=(8, 0))
             var = ctk.BooleanVar(value=self._plugin_enabled(path.name))
             ctk.CTkSwitch(
                 bottom,
@@ -1445,6 +1459,7 @@ class App(ctk.CTk):
                 "use_headless": False,
                 "use_korblox": bool(self.use_korblox_var.get()),
                 "enabled_plugins": list(self.enabled_plugins),
+                "plugin_off": sorted(self.plugin_off),
                 "test_mode": bool(self.test_mode_var.get()),
                 "settings_tab": self._settings_tab,
                 "fflags": {

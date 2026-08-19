@@ -373,11 +373,14 @@
           var card = document.createElement("article");
           card.className = "card";
           var paid = Number(p.price) > 0;
+          var bundled = !!p.bundled;
           var action = paid
             ? '<a class="ghost" href="' + DISCORD + '" target="_blank" rel="noopener">Acquista</a>'
-            : (p.file
-              ? '<a class="ghost" href="store/' + encodeURIComponent(p.file) + '" download="' + String(p.file).replace(/"/g, "") + '">Scarica</a>'
-              : "");
+            : (bundled
+              ? '<a class="ghost" href="https://github.com/SisoSeller/solax/releases/latest/download/SolaX.exe">Nell’app</a>'
+              : (p.file
+                ? '<a class="ghost" href="store/' + encodeURIComponent(p.file) + '" download="' + String(p.file).replace(/"/g, "") + '">Scarica</a>'
+                : ""));
           card.innerHTML = "<h3></h3><p class=\"desc\"></p><div class=\"row\"><button type=\"button\" class=\"ghost details\">Details</button>" + action + "<span class=\"price\"></span></div>";
           card.querySelector("h3").textContent = p.name || p.id;
           card.querySelector(".desc").textContent = p.description || "";
@@ -386,11 +389,16 @@
             document.getElementById("details-title").textContent = p.name || p.id;
             document.getElementById("details-text").textContent = (p.description || "") + (paid ? ("\n\nPrezzo: " + priceLabel(p.price)) : "");
             var dl = document.getElementById("details-download");
-            if (p.file && !paid) {
+            if (p.file && !paid && !p.bundled) {
               dl.style.display = "";
               dl.href = "store/" + encodeURIComponent(p.file);
               dl.setAttribute("download", p.file);
               dl.textContent = "Scarica";
+            } else if (p.bundled) {
+              dl.style.display = "";
+              dl.href = "https://github.com/SisoSeller/solax/releases/latest/download/SolaX.exe";
+              dl.removeAttribute("download");
+              dl.textContent = "Download app";
             } else {
               dl.style.display = paid ? "" : "none";
               dl.href = DISCORD;
