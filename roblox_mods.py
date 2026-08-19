@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import shutil
 import struct
+import sys
 from pathlib import Path
 
 from PIL import Image
@@ -154,20 +155,34 @@ def png_to_sky_tex(
     return _dds_header(size, mip_count) + body
 
 
+def bundled_day_sky_png() -> Path:
+    here = Path(__file__).resolve().parent
+    candidates = [here / "assets" / "always_day.png"]
+    if getattr(sys, "frozen", False):
+        exe_dir = Path(sys.executable).resolve().parent
+        mei = Path(getattr(sys, "_MEIPASS", exe_dir))
+        candidates = [
+            mei / "assets" / "always_day.png",
+            exe_dir / "assets" / "always_day.png",
+            exe_dir / "_internal" / "assets" / "always_day.png",
+            here / "assets" / "always_day.png",
+        ]
+    for path in candidates:
+        if path.is_file():
+            return path
+    return candidates[0]
+
+
 def ensure_day_sky_png() -> Path:
-    path = rf.app_data_dir() / "always_day.png"
-    path.parent.mkdir(parents=True, exist_ok=True)
-    img = Image.new("RGB", (512, 512))
-    pix = img.load()
-    for y in range(512):
-        t = y / 511
-        r = int(72 + (236 - 72) * t)
-        g = int(158 + (214 - 158) * t)
-        b = int(232 + (168 - 232) * t)
-        for x in range(512):
-            pix[x, y] = (r, g, b)
-    img.save(path, "PNG")
-    return path
+    src = bundled_day_sky_png()
+    dest = rf.app_data_dir() / "always_day.png"
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    if src.is_file():
+        shutil.copy2(src, dest)
+        return dest
+    img = Image.new("RGB", (512, 512), (110, 176, 230))
+    img.save(dest, "PNG")
+    return dest
 
 
 def apply_sky(

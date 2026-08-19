@@ -3,7 +3,7 @@
     {
       "id": "all-day",
       "name": "ALL DAY",
-      "description": "Già dentro SolaX.exe: non si scarica a parte. All’avvio è attivo, in game il cielo resta giorno sul tuo client.",
+      "description": "Dentro SolaX-Setup: ALL DAY.exe. Cielo sempre questo, solo sul tuo schermo, gli altri non lo vedono.",
       "price": 0,
       "bundled": true
     }

@@ -19,7 +19,7 @@ import roblox_korblox as rk
 import roblox_mods as rm
 import roblox_plugins as rp
 
-VERSION = "1.1.3"
+VERSION = "1.1.4"
 FR_PRIVATE = 0x10
 
 BG = "#1a1a1a"
@@ -266,13 +266,18 @@ class App(ctk.CTk):
             self.selected_family = cfg.get("last_font_name") or rf.font_family_name(self.selected_font)
 
         self.use_font_var = ctk.BooleanVar(value=bool(cfg.get("use_custom_font", True if self.selected_font else False)))
-        self.use_sky_var = ctk.BooleanVar(value=bool(cfg.get("use_custom_sky", False)))
-        self.use_shift_var = ctk.BooleanVar(value=bool(cfg.get("use_shift_lock", False)))
         self.use_korblox_var = ctk.BooleanVar(value=bool(cfg.get("use_korblox", False)))
         self.plugin_off: set[str] = {Path(str(name)).name for name in (cfg.get("plugin_off") or [])}
-        self.enabled_plugins: list[str] = [
-            str(name) for name in (cfg.get("enabled_plugins") or []) if str(name).lower().endswith(".bat")
-        ]
+        if "ALL DAY.bat" in self.plugin_off:
+            self.plugin_off.discard("ALL DAY.bat")
+            self.plugin_off.add("ALL DAY.exe")
+        self.enabled_plugins: list[str] = []
+        for raw in cfg.get("enabled_plugins") or []:
+            name = str(raw)
+            if name.lower() == "all day.bat":
+                name = "ALL DAY.exe"
+            if Path(name).suffix.lower() in {".exe", ".bat"}:
+                self.enabled_plugins.append(name)
         for name in rp.bundled_plugin_names():
             if name not in self.plugin_off and name not in self.enabled_plugins:
                 self.enabled_plugins.append(name)
@@ -303,10 +308,6 @@ class App(ctk.CTk):
         self.flag_value_var = ctk.StringVar(value="")
         self.font_search_var = ctk.StringVar(value="")
         self.font_search_var.trace_add("write", lambda *_: self._rebuild_font_list())
-        self.sky_png: Path | None = Path(cfg["sky_png"]) if cfg.get("sky_png") and Path(cfg["sky_png"]).is_file() else None
-        self.shift_png: Path | None = (
-            Path(cfg["shift_lock_png"]) if cfg.get("shift_lock_png") and Path(cfg["shift_lock_png"]).is_file() else None
-        )
         self._font_rows: list[tuple[ctk.CTkFrame, Path]] = []
         self._ready = False
         self._persist_job: str | None = None
@@ -674,36 +675,6 @@ class App(ctk.CTk):
             anchor="w",
         )
         self.preview.pack(fill="x", pady=(4, 0))
-
-        sky_card = self._card(parent)
-        self._switch_row(
-            sky_card,
-            "Custom sky",
-            "Cambia il cielo di default. Aggiungi un PNG (vale per tutte le facce).",
-            self.use_sky_var,
-        )
-        self.sky_row = self._png_picker_row(
-            sky_card,
-            self.sky_png,
-            "Scegli PNG cielo",
-            self.pick_sky,
-        )
-        self.sky_name_label, self.sky_preview_label = self.sky_row
-
-        shift_card = self._card(parent)
-        self._switch_row(
-            shift_card,
-            "Shift lock",
-            "Cambia l’icona del mouse quando usi lo shift lock. Aggiungi un PNG.",
-            self.use_shift_var,
-        )
-        self.shift_row = self._png_picker_row(
-            shift_card,
-            self.shift_png,
-            "Scegli PNG shift lock",
-            self.pick_shift_lock,
-        )
-        self.shift_name_label, self.shift_preview_label = self.shift_row
 
     def _png_picker_row(self, parent, path: Path | None, button_text: str, command):
         row = ctk.CTkFrame(parent, fg_color="transparent")
@@ -1099,16 +1070,16 @@ class App(ctk.CTk):
 
     def _add_plugin_file(self):
         path = filedialog.askopenfilename(
-            title="Scegli un plugin .bat",
-            filetypes=[("Plugin", "*.bat")],
+            title="Scegli un plugin",
+            filetypes=[("Plugin", "*.exe;*.bat"), ("EXE", "*.exe"), ("BAT", "*.bat")],
         )
         if path:
             self._import_plugin_path(Path(path))
 
     def _remove_plugin_file(self, name: str):
-        if rp.is_bundled(name):
+        if rp.is_always_day(name) or rp.is_bundled(name):
             self.enabled_plugins = [item for item in self.enabled_plugins if item != name]
-            self.plugin_off.add(name)
+            self.plugin_off.add("ALL DAY.exe")
             self._rebuild_plugin_list()
             self._persist_ui()
             return
@@ -1140,7 +1111,7 @@ class App(ctk.CTk):
         for item in files:
             raw = item.decode("utf-8", errors="ignore") if isinstance(item, (bytes, bytearray)) else str(item)
             path = Path(raw)
-            if path.suffix.lower() == ".bat" and path.is_file():
+            if path.suffix.lower() in {".bat", ".exe"} and path.is_file():
                 self._import_plugin_path(path)
 
     def _rebuild_plugin_list(self):
@@ -1165,7 +1136,7 @@ class App(ctk.CTk):
             ).pack(pady=(36, 6))
             ctk.CTkLabel(
                 empty,
-                text="ALL DAY è già dentro SolaX. Altri .bat: Create a New Plugin o trascinali qui.",
+                text="Trascina un .exe o .bat, oppure Create a New Plugin. Poi Rimuovi se non lo vuoi più.",
                 font=ctk.CTkFont(family="Segoe UI", size=13),
                 text_color=MUTED,
                 justify="center",
@@ -1202,8 +1173,7 @@ class App(ctk.CTk):
             bottom = ctk.CTkFrame(inner, fg_color="transparent")
             bottom.pack(fill="x", side="bottom")
             FooterButton(bottom, "Details", lambda p=path: self._plugin_details(p), width=84).pack(side="left")
-            if not rp.is_bundled(path.name):
-                FooterButton(bottom, "Remove", lambda n=path.name: self._remove_plugin_file(n), width=84).pack(side="left", padx=(8, 0))
+            FooterButton(bottom, "Remove", lambda n=path.name: self._remove_plugin_file(n), width=84).pack(side="left", padx=(8, 0))
             var = ctk.BooleanVar(value=self._plugin_enabled(path.name))
             ctk.CTkSwitch(
                 bottom,
@@ -1389,34 +1359,6 @@ class App(ctk.CTk):
         self._rebuild_font_list()
         self._select_font(self.selected_family, font_path)
 
-    def _pick_png(self, title: str) -> Path | None:
-        path = filedialog.askopenfilename(
-            title=title,
-            filetypes=[("PNG", "*.png *.PNG"), ("Immagini", "*.png *.jpg *.jpeg *.webp"), ("Tutti i file", "*.*")],
-        )
-        return Path(path) if path else None
-
-    def pick_sky(self):
-        path = self._pick_png("Scegli un PNG per il cielo")
-        if not path:
-            return
-        self.sky_png = path
-        self.use_sky_var.set(True)
-        self.gray_sky_var.set(False)
-        self.sky_name_label.configure(text=path.name)
-        self._set_thumb(self.sky_preview_label, path)
-        self._persist_ui()
-
-    def pick_shift_lock(self):
-        path = self._pick_png("Scegli un PNG per lo shift lock")
-        if not path:
-            return
-        self.shift_png = path
-        self.use_shift_var.set(True)
-        self.shift_name_label.configure(text=path.name)
-        self._set_thumb(self.shift_preview_label, path)
-        self._persist_ui()
-
     def _update_preview(self):
         if not self.selected_font or not self.selected_font.is_file():
             return
@@ -1449,13 +1391,11 @@ class App(ctk.CTk):
         cfg.update(
             {
                 "use_custom_font": bool(self.use_font_var.get()),
-                "use_custom_sky": bool(self.use_sky_var.get()),
-                "use_shift_lock": bool(self.use_shift_var.get()),
+                "use_custom_sky": False,
+                "use_shift_lock": False,
                 "use_stretch": False,
                 "last_font": str(self.selected_font) if self.selected_font else cfg.get("last_font"),
                 "last_font_name": self.selected_family or cfg.get("last_font_name"),
-                "sky_png": str(self.sky_png) if self.sky_png else cfg.get("sky_png"),
-                "shift_lock_png": str(self.shift_png) if self.shift_png else cfg.get("shift_lock_png"),
                 "use_headless": False,
                 "use_korblox": bool(self.use_korblox_var.get()),
                 "enabled_plugins": list(self.enabled_plugins),
@@ -1477,7 +1417,7 @@ class App(ctk.CTk):
                     "disable_dpi_scale": bool(self.dpi_var.get()),
                     "prefer_d3d11": bool(self.d3d11_var.get()),
                     "prefer_vulkan": bool(self.vulkan_var.get()),
-                    "gray_sky": bool(self.gray_sky_var.get()) and not bool(self.use_sky_var.get()),
+                    "gray_sky": bool(self.gray_sky_var.get()),
                     "freeze_grass": bool(self.grass_var.get()),
                 },
                 "custom_fflags": dict(self.custom_flags),
@@ -1488,8 +1428,6 @@ class App(ctk.CTk):
     def _bind_persist(self):
         watched = (
             self.use_font_var,
-            self.use_sky_var,
-            self.use_shift_var,
             self.use_korblox_var,
             self.test_mode_var,
             self.unlock_fps_var,
@@ -1511,11 +1449,6 @@ class App(ctk.CTk):
         )
         for var in watched:
             var.trace_add("write", lambda *_: self._schedule_persist())
-        self.use_sky_var.trace_add("write", self._sky_disables_gray)
-
-    def _sky_disables_gray(self, *_):
-        if self.use_sky_var.get() and self.gray_sky_var.get():
-            self.gray_sky_var.set(False)
 
     def _schedule_persist(self):
         if not self._ready:
@@ -1563,14 +1496,6 @@ class App(ctk.CTk):
             cfg["use_custom_font"] = False
             self.use_font_var.set(False)
             notes.append("Font non trovato: opzione disattivata.")
-        if cfg.get("use_custom_sky") and not (self.sky_png and self.sky_png.is_file()):
-            cfg["use_custom_sky"] = False
-            self.use_sky_var.set(False)
-            notes.append("PNG cielo non trovato: opzione disattivata.")
-        if cfg.get("use_shift_lock") and not (self.shift_png and self.shift_png.is_file()):
-            cfg["use_shift_lock"] = False
-            self.use_shift_var.set(False)
-            notes.append("PNG shift lock non trovato: opzione disattivata.")
         if rf.find_roblox() is None:
             messagebox.showerror(
                 "Roblox non trovato",
@@ -1592,13 +1517,9 @@ class App(ctk.CTk):
         rf.save_config(cfg)
         font_path = self.selected_font
         use_font = bool(cfg.get("use_custom_font"))
-        use_sky = bool(cfg.get("use_custom_sky"))
-        use_shift = bool(cfg.get("use_shift_lock"))
         use_korblox = bool(cfg.get("use_korblox"))
         enabled_plugins = list(cfg.get("enabled_plugins") or [])
         use_always_day = rp.has_always_day(enabled_plugins)
-        sky_png = self.sky_png
-        shift_png = self.shift_png
         fflags = cfg.get("fflags") or {}
         custom_flags = cfg.get("custom_fflags") or {}
 
@@ -1631,20 +1552,13 @@ class App(ctk.CTk):
                             pass
 
                     step("Font", restore_font)
-                if use_sky and sky_png:
-                    self.after(0, lambda: self.gray_sky_var.set(False))
-                    fflags["gray_sky"] = False
-                    step("Cielo", lambda: rm.apply_sky(sky_png, install))
-                elif use_always_day:
+                if use_always_day:
                     self.after(0, lambda: self.gray_sky_var.set(False))
                     fflags["gray_sky"] = False
                     step("Cielo", lambda: rm.apply_always_day(install))
                 else:
                     step("Cielo", lambda: rm.restore_sky(install))
-                if use_shift and shift_png:
-                    step("Shift lock", lambda: rm.apply_shift_lock(shift_png, install))
-                else:
-                    step("Shift lock", lambda: rm.restore_shift_lock(install))
+                step("Shift lock", lambda: rm.restore_shift_lock(install))
                 step("Heads", lambda: rh.restore_headless(install))
                 if use_korblox:
                     step("Korblox", lambda: rk.apply_korblox(install))
@@ -1660,7 +1574,7 @@ class App(ctk.CTk):
                         install,
                         custom=custom_flags,
                         previous_custom_keys=old_custom_keys,
-                        disable_gray_sky=bool(use_sky or use_always_day),
+                        disable_gray_sky=bool(use_always_day),
                     ),
                 )
                 if launch:
@@ -1727,10 +1641,25 @@ class App(ctk.CTk):
 
 
 if __name__ == "__main__":
+    def exe_stem() -> str:
+        return Path(sys.argv[0]).stem.lower().replace("-", " ").replace("_", " ")
+
+    def run_all_day_cli() -> int:
+        try:
+            rm.apply_always_day()
+            return 0
+        except Exception as exc:
+            try:
+                ctypes.windll.user32.MessageBoxW(0, str(exc), "ALL DAY", 0x10)
+            except Exception:
+                pass
+            return 1
+
     def is_auto_launch() -> bool:
         if "--auto" in sys.argv:
             return True
-        stem = Path(sys.argv[0]).stem.lower().replace("-", " ").replace("_", " ")
-        return stem in {"solax auto", "solax automatico"}
+        return exe_stem() in {"solax auto", "solax automatico"}
 
+    if exe_stem() in {"all day", "allday"}:
+        raise SystemExit(run_all_day_cli())
     App(auto=is_auto_launch()).mainloop()

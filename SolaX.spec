@@ -7,7 +7,7 @@ hiddenimports = ['PIL._tkinter_finder', 'roblox_fonts', 'roblox_flags', 'roblox_
 tmp_ret = collect_all('customtkinter')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 datas += [('assets/rightleg.mesh', 'assets')]
-datas += [('assets/plugins', 'assets/plugins')]
+datas += [('assets/always_day.png', 'assets')]
 datas += [('website/index.html', 'website')]
 datas += [('website/icon.png', 'website')]
 datas += [('website/icon.ico', 'website')]
@@ -67,9 +67,29 @@ exe_auto = EXE(
     icon='website/icon.ico',
 )
 
+exe_all_day = EXE(
+    pyz,
+    a.scripts,
+    [],
+    exclude_binaries=True,
+    name='ALL DAY',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=True,
+    console=False,
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+    icon='website/icon.ico',
+)
+
 coll = COLLECT(
     exe,
     exe_auto,
+    exe_all_day,
     a.binaries,
     a.zipfiles,
     a.datas,
