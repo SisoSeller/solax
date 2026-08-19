@@ -1,0 +1,22 @@
+---
+description: After any SolaX change, rebuild the setup, update the site, and publish without waiting to be asked.
+alwaysApply: true
+---
+
+# Ship every change
+
+Do not wait for the user to ask to rebuild, update the site, or publish. If you change the app, plugins, site, or installer, finish the full ship in the same turn.
+
+1. Bump `VERSION` in `app.py` (patch, e.g. 1.1.3 → 1.1.4). Add a short changelog card in `docs/index.html` and copy that file to `website/index.html`.
+2. Keep `docs/` and `website/` in sync (HTML, `store.json`, icons). Pages serves `docs/`.
+3. Site Download must stay `SolaX-Setup.exe`:
+   `https://github.com/SisoSeller/solax/releases/latest/download/SolaX-Setup.exe`
+4. Rebuild: `python -m PyInstaller --noconfirm --clean SolaX.spec` then
+   `"%LOCALAPPDATA%\Programs\Inno Setup 6\ISCC.exe" installer\SolaX.iss`
+   Update `MyAppVersion` in `installer/SolaX.iss` to match.
+5. Commit, merge into `main`, `git push origin main`.
+6. Publish: `gh release create vX.Y.Z "dist\SolaX-Setup.exe#SolaX-Setup.exe" --title "SolaX X.Y.Z" --notes "..." --latest`
+
+Skip the rebuild only for pure docs/site HTML/CSS/JS with no app or installer change; still sync `docs/` → `website/`, commit, and push `main`.
+
+Do not ship `website/solax.mp4` inside the setup. No Roblox executor/inject. Plugins in the app are local `.bat` plus bundled assets inside the setup.
