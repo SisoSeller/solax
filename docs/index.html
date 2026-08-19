@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SolaX</title>
+  <link rel="icon" href="favicon.png" type="image/png" />
+  <link rel="apple-touch-icon" href="icon.png" />
+  <style>
+    :root {
+      --bg: #0e0e10;
+      --panel: #16161a;
+      --line: #2a2a32;
+      --text: #f4f4f7;
+      --muted: #9a9aa8;
+      --purple: #7c5cfc;
+      --purple-soft: #b794f6;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background:
+        radial-gradient(900px 500px at 50% 18%, rgba(124, 92, 252, 0.22), transparent 60%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100%;
+    }
+    .top {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 22px 32px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+    .brand img {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+    }
+    .discord {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border: 1px solid #3d3d4a;
+      border-radius: 10px;
+      color: var(--text);
+      text-decoration: none;
+      background: rgba(22, 22, 26, 0.8);
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .discord:hover {
+      border-color: var(--purple);
+      color: var(--purple-soft);
+    }
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 96px 24px 64px;
+    }
+    .hero img.logo {
+      width: 112px;
+      height: 112px;
+      border-radius: 28px;
+      box-shadow: 0 20px 60px rgba(124, 92, 252, 0.35);
+      margin-bottom: 22px;
+    }
+    .hero h1 {
+      font-size: 72px;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .by {
+      margin-top: 18px;
+      font-size: 20px;
+      color: var(--purple-soft);
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+    }
+    .changelog {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 24px 96px;
+    }
+    .changelog h2 {
+      font-size: 14px;
+      letter-spacing: 0.18em;
+      color: var(--muted);
+      margin-bottom: 18px;
+      text-transform: uppercase;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 22px 24px;
+      margin-bottom: 14px;
+    }
+    .card h3 {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+    .card .tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--purple-soft);
+      border: 1px solid rgba(124, 92, 252, 0.45);
+      border-radius: 999px;
+      padding: 3px 8px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .card ul {
+      padding-left: 18px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+    .card li { margin: 2px 0; }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="#">
+      <img src="icon.png" alt="SolaX" />
+      SolaX
+    </a>
+    <a class="discord" href="https://discord.gg/zq3fR5MxgU" target="_blank" rel="noopener">
+      Discord
+    </a>
+  </header>
+
+  <section class="hero">
+    <img class="logo" src="icon.png" alt="SolaX icon" />
+    <h1>SolaX</h1>
+    <p class="by">by KAPPA</p>
+  </section>
+
+  <section class="changelog" id="changelog">
+    <h2>Changelog</h2>
+
+    <article class="card">
+      <h3>1.0.0 <span class="tag">Beta Release</span></h3>
+      <ul>
+        <li>Prima versione di SolaX</li>
+        <li>Home: Launch Roblox e Settings</li>
+        <li>Integrations: font custom, cielo PNG, shift lock</li>
+        <li>FastFlag: preset e editor</li>
+        <li>Interfaccia scura viola, solo sul tuo client</li>
+      </ul>
+    </article>
+
+    <article class="card">
+      <h3>1.0.7 <span class="tag">Official Release</span></h3>
+      <ul>
+        <li>Korblox: sostituisce la mesh della gamba destra, inclusa nell’exe</li>
+        <li>Graphics: post, ombre, texture, particles, MSAA, luci, nuvole</li>
+        <li>Le impostazioni restano quando chiudi SolaX</li>
+        <li>SolaX Auto: avvio con un doppio clic, senza menu</li>
+        <li>Applica solo gli switch che accendi tu, senza toccare il resto di Roblox</li>
+        <li>Rimosso Stretched dal menu</li>
+        <li>SolaX.exe e SolaX Auto.exe</li>
+      </ul>
+    </article>
+  </section>
+</body>
+</html>
