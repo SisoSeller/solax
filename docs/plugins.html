@@ -272,7 +272,6 @@
       <button type="button" class="review" id="review-open">Review</button>
       <a class="discord" href="https://discord.gg/zq3fR5MxgU" target="_blank" rel="noopener">Discord</a>
     </div>
-    <button type="button" class="login" id="login-open">Accedi</button>
   </header>
 
   <main class="page">
@@ -308,37 +307,6 @@
       <div class="modal-actions">
         <button type="button" id="review-close">Chiudi</button>
         <button type="button" class="send" id="review-send">Invia</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-bg" id="login-modal">
-    <div class="modal">
-      <h3>Accedi</h3>
-      <p class="hint">Pannello download SolaX.</p>
-      <label for="login-user">Utente</label>
-      <input id="login-user" maxlength="32" autocomplete="username" />
-      <label for="login-pass">Password</label>
-      <input id="login-pass" type="password" maxlength="32" autocomplete="current-password" />
-      <p id="login-status"></p>
-      <div class="modal-actions">
-        <button type="button" id="login-close">Chiudi</button>
-        <button type="button" class="send" id="login-send">Entra</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-bg" id="stats-modal">
-    <div class="modal wide">
-      <h3>Pannello</h3>
-      <p class="hint">Download di SolaX-Setup.exe.</p>
-      <div class="stat">
-        <div class="num" id="download-count">…</div>
-        <div class="lbl">persone hanno scaricato SolaX</div>
-      </div>
-      <div class="modal-actions">
-        <button type="button" id="stats-logout">Esci</button>
-        <button type="button" class="send" id="stats-close">Chiudi</button>
       </div>
     </div>
   </div>
@@ -491,68 +459,6 @@
             setStatus("Invio non riuscito. Riprova.");
           });
       });
-
-      var USER = "898989";
-      var PASS = "898989";
-      var loginModal = document.getElementById("login-modal");
-      var statsModal = document.getElementById("stats-modal");
-      var loginBtn = document.getElementById("login-open");
-      var loginStatus = document.getElementById("login-status");
-      var countEl = document.getElementById("download-count");
-      function loggedIn() { return sessionStorage.getItem("solax_admin") === "1"; }
-      function setLogged(on) {
-        if (on) sessionStorage.setItem("solax_admin", "1");
-        else sessionStorage.removeItem("solax_admin");
-        loginBtn.textContent = on ? "Pannello" : "Accedi";
-      }
-      function loadDownloads() {
-        countEl.textContent = "…";
-        fetch("https://api.github.com/repos/SisoSeller/solax/releases")
-          .then(function (r) { return r.json(); })
-          .then(function (releases) {
-            var total = 0;
-            (releases || []).forEach(function (rel) {
-              (rel.assets || []).forEach(function (asset) {
-                if (String(asset.name).toLowerCase() === "solax.exe" || String(asset.name).toLowerCase() === "solax-setup.exe") {
-                  total += Number(asset.download_count) || 0;
-                }
-              });
-            });
-            countEl.textContent = String(total);
-          })
-          .catch(function () { countEl.textContent = "n/d"; });
-      }
-      function openLogin() {
-        if (loggedIn()) {
-          statsModal.classList.add("open");
-          loadDownloads();
-          return;
-        }
-        loginStatus.textContent = "";
-        loginModal.classList.add("open");
-      }
-      document.getElementById("login-open").addEventListener("click", openLogin);
-      document.getElementById("login-close").addEventListener("click", function () { loginModal.classList.remove("open"); });
-      document.getElementById("stats-close").addEventListener("click", function () { statsModal.classList.remove("open"); });
-      document.getElementById("stats-logout").addEventListener("click", function () {
-        setLogged(false);
-        statsModal.classList.remove("open");
-      });
-      loginModal.addEventListener("click", function (e) { if (e.target === loginModal) loginModal.classList.remove("open"); });
-      statsModal.addEventListener("click", function (e) { if (e.target === statsModal) statsModal.classList.remove("open"); });
-      document.getElementById("login-send").addEventListener("click", function () {
-        var u = document.getElementById("login-user").value.trim();
-        var p = document.getElementById("login-pass").value;
-        if (u === USER && p === PASS) {
-          setLogged(true);
-          loginModal.classList.remove("open");
-          statsModal.classList.add("open");
-          loadDownloads();
-        } else {
-          loginStatus.textContent = "Credenziali non valide.";
-        }
-      });
-      setLogged(loggedIn());
     })();
   </script>
 </body>
