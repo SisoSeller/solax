@@ -19,7 +19,7 @@ import roblox_korblox as rk
 import roblox_mods as rm
 import roblox_plugins as rp
 
-VERSION = "1.1.4"
+VERSION = "1.1.5"
 FR_PRIVATE = 0x10
 
 BG = "#1a1a1a"
@@ -301,6 +301,8 @@ class App(ctk.CTk):
         self.vulkan_var = ctk.BooleanVar(value=bool(fflags.get("prefer_vulkan", False)))
         self.gray_sky_var = ctk.BooleanVar(value=bool(fflags.get("gray_sky", False)))
         self.grass_var = ctk.BooleanVar(value=bool(fflags.get("freeze_grass", False)))
+        self.shader_glow_var = ctk.BooleanVar(value=bool(fflags.get("shader_glow", True)))
+        self.shader_reflection_var = ctk.BooleanVar(value=bool(fflags.get("shader_reflection", True)))
         self.custom_flags: dict[str, str] = {
             str(k): str(v) for k, v in (cfg.get("custom_fflags") or {}).items()
         }
@@ -482,7 +484,11 @@ class App(ctk.CTk):
         self.nav_items["plugin"] = SidebarItem(
             sidebar, "\uE8A5", "Plugin", lambda: self._show_tab("plugin"), False
         )
-        self.nav_items["plugin"].pack(fill="x", padx=(22, 8))
+        self.nav_items["plugin"].pack(fill="x", padx=8)
+        self.nav_items["shader"] = SidebarItem(
+            sidebar, "\uE706", "Shader", lambda: self._show_tab("shader"), False
+        )
+        self.nav_items["shader"].pack(fill="x", padx=(22, 8))
 
         ctk.CTkFrame(body, width=1, fg_color=BORDER).pack(side="left", fill="y")
 
@@ -495,12 +501,14 @@ class App(ctk.CTk):
         self.graphics_page = ctk.CTkScrollableFrame(content, fg_color=BG, corner_radius=0)
         self.premium_page = ctk.CTkFrame(content, fg_color=BG)
         self.plugin_page = ctk.CTkFrame(content, fg_color=BG)
+        self.shader_page = ctk.CTkScrollableFrame(content, fg_color=BG, corner_radius=0)
         self._build_integrations(self.integrations_page)
         self._build_fastflag(self.fastflag_page)
         self._build_software(self.software_page)
         self._build_graphics(self.graphics_page)
         self._build_premium(self.premium_page)
         self._build_plugin(self.plugin_page)
+        self._build_shader(self.shader_page)
 
         footer = ctk.CTkFrame(self.settings, fg_color=FOOTER_BG, height=64, corner_radius=0)
         footer.pack(side="bottom", fill="x")
@@ -1037,6 +1045,36 @@ class App(ctk.CTk):
         self._rebuild_plugin_list()
         self.after(300, self._hook_plugin_drop)
 
+    def _build_shader(self, parent):
+        self._page_header(
+            parent,
+            "\uE706",
+            "Shader",
+            "Glow e reflection sul tuo client, si applicano quando avvii il gioco.",
+        )
+        card = self._card(parent)
+        self._switch_row(
+            card,
+            "Glow",
+            "Luci più forti e qualità alta (bloom del gioco). Solo tu lo vedi.",
+            self.shader_glow_var,
+        )
+        self._switch_row(
+            card,
+            "Reflection",
+            "Texture al massimo, anti-aliasing e dettaglio. Superfici più nitide e lucide.",
+            self.shader_reflection_var,
+        )
+        ctk.CTkLabel(
+            card,
+            text="Se Glow o Reflection sono accesi, vincono su Graphics (low quality, texture basse, no MSAA). Non è un injector: gli altri giocatori non lo vedono.",
+            font=ctk.CTkFont(family="Segoe UI", size=12),
+            text_color=MUTED,
+            anchor="w",
+            wraplength=520,
+            justify="left",
+        ).pack(fill="x", pady=(8, 0))
+
     def _open_plugin_store(self):
         webbrowser.open("https://sisoseller.github.io/solax/plugins.html")
 
@@ -1222,6 +1260,7 @@ class App(ctk.CTk):
             "graphics": self.graphics_page,
             "premium": self.premium_page,
             "plugin": self.plugin_page,
+            "shader": self.shader_page,
         }
         for page in pages.values():
             page.pack_forget()
@@ -1419,6 +1458,8 @@ class App(ctk.CTk):
                     "prefer_vulkan": bool(self.vulkan_var.get()),
                     "gray_sky": bool(self.gray_sky_var.get()),
                     "freeze_grass": bool(self.grass_var.get()),
+                    "shader_glow": bool(self.shader_glow_var.get()),
+                    "shader_reflection": bool(self.shader_reflection_var.get()),
                 },
                 "custom_fflags": dict(self.custom_flags),
             }
@@ -1446,6 +1487,8 @@ class App(ctk.CTk):
             self.vulkan_var,
             self.gray_sky_var,
             self.grass_var,
+            self.shader_glow_var,
+            self.shader_reflection_var,
         )
         for var in watched:
             var.trace_add("write", lambda *_: self._schedule_persist())
@@ -1567,6 +1610,7 @@ class App(ctk.CTk):
                 if enabled_plugins:
                     plugin_warns = rp.run_plugins(enabled_plugins, cwd=install.version_dir)
                     warnings.extend(plugin_warns)
+                shader_on = bool(fflags.get("shader_glow") or fflags.get("shader_reflection"))
                 step(
                     "FastFlag",
                     lambda: rff.apply_fflags(
@@ -1574,9 +1618,11 @@ class App(ctk.CTk):
                         install,
                         custom=custom_flags,
                         previous_custom_keys=old_custom_keys,
-                        disable_gray_sky=bool(use_always_day),
+                        disable_gray_sky=bool(use_always_day or fflags.get("shader_glow")),
                     ),
                 )
+                if shader_on:
+                    step("Shader", rff.apply_shader_quality)
                 if launch:
                     rf.launch_roblox(install)
                     launched = True

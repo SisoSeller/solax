@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import os
+import re
 from pathlib import Path
 
 import roblox_fonts as rf
@@ -29,6 +31,11 @@ MANAGED_KEYS = {
     "FIntRenderLocalLightUpdatesMin",
     "FIntRenderCloudsCountLimit",
     "FFlagCloudsUseNewSystem",
+    "DFIntCSGLevelOfDetailSwitchingDistance",
+    "DFIntCSGLevelOfDetailSwitchingDistanceL12",
+    "DFIntCSGLevelOfDetailSwitchingDistanceL23",
+    "DFIntCSGLevelOfDetailSwitchingDistanceL34",
+    "FFlagDebugGraphicsPreferOpenGL",
 }
 
 DEFAULT_FFLAGS = {
@@ -48,6 +55,8 @@ DEFAULT_FFLAGS = {
     "prefer_vulkan": False,
     "gray_sky": False,
     "freeze_grass": False,
+    "shader_glow": True,
+    "shader_reflection": True,
 }
 
 
@@ -108,7 +117,58 @@ def flags_from_settings(fflags: dict) -> dict[str, str]:
         out["FFlagDebugSkyGray"] = "true"
     if fflags.get("freeze_grass"):
         out["FIntGrassMovementReducedMotionFactor"] = "0"
+    if fflags.get("shader_glow"):
+        out.pop("FFlagDisablePostFx", None)
+        out.pop("FFlagDebugSkyGray", None)
+        out["DFIntDebugFRMQualityLevelOverride"] = "21"
+        out["FFlagDebugGraphicsPreferD3D11"] = "true"
+        out.pop("FFlagDebugGraphicsPreferVulkan", None)
+        out.pop("FFlagDebugGraphicsPreferOpenGL", None)
+    if fflags.get("shader_reflection"):
+        out["DFFlagTextureQualityOverrideEnabled"] = "true"
+        out["DFIntTextureQualityOverride"] = "3"
+        out["FIntDebugForceMSAASamples"] = "4"
+        out.pop("DFFlagDebugPauseVoxelizer", None)
+        out.pop("FIntRenderShadowIntensity", None)
+        out["FIntFRMMaxGrassDistance"] = "32"
+        out["FIntFRMMinGrassDistance"] = "12"
+        out["DFIntCSGLevelOfDetailSwitchingDistance"] = "10000"
+        out["DFIntCSGLevelOfDetailSwitchingDistanceL12"] = "10000"
+        out["DFIntCSGLevelOfDetailSwitchingDistanceL23"] = "10000"
+        out["DFIntCSGLevelOfDetailSwitchingDistanceL34"] = "10000"
     return out
+
+
+def gbs_path() -> Path:
+    return (
+        Path(os.environ.get("LOCALAPPDATA", str(Path.home() / "AppData" / "Local")))
+        / "Roblox"
+        / "GlobalBasicSettings_13.xml"
+    )
+
+
+def _set_xml_tag(xml: str, tag: str, name: str, value: str) -> str:
+    pattern = rf'(<{tag} name="{name}">)([^<]*)(</{tag}>)'
+    if re.search(pattern, xml):
+        return re.sub(pattern, rf"\g<1>{value}\g<3>", xml)
+    return xml.replace(
+        "</Properties>",
+        f'\t\t\t<{tag} name="{name}">{value}</{tag}>\n\t\t</Properties>',
+        1,
+    )
+
+
+def apply_shader_quality() -> None:
+    path = gbs_path()
+    if not path.is_file():
+        rf.log("shader: GlobalBasicSettings_13.xml non trovato")
+        return
+    xml = path.read_text(encoding="utf-8")
+    xml = _set_xml_tag(xml, "int", "GraphicsQualityLevel", "21")
+    xml = _set_xml_tag(xml, "token", "SavedQualityLevel", "10")
+    rf.make_writable(path)
+    path.write_text(xml, encoding="utf-8")
+    rf.log("shader: qualità grafica 21")
 
 
 def apply_fflags(
