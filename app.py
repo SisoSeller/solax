@@ -17,9 +17,8 @@ import roblox_fonts as rf
 import roblox_headless as rh
 import roblox_korblox as rk
 import roblox_mods as rm
-import roblox_plugins as rp
 
-VERSION = "1.1.5"
+VERSION = "1.1.6"
 FR_PRIVATE = 0x10
 
 BG = "#1a1a1a"
@@ -259,7 +258,6 @@ class App(ctk.CTk):
         self.nav_items: dict[str, SidebarItem] = {}
 
         cfg = rf.load_config()
-        rp.install_bundled_plugins()
         last = cfg.get("last_font")
         if last and Path(last).is_file():
             self.selected_font = Path(last)
@@ -267,20 +265,6 @@ class App(ctk.CTk):
 
         self.use_font_var = ctk.BooleanVar(value=bool(cfg.get("use_custom_font", True if self.selected_font else False)))
         self.use_korblox_var = ctk.BooleanVar(value=bool(cfg.get("use_korblox", False)))
-        self.plugin_off: set[str] = {Path(str(name)).name for name in (cfg.get("plugin_off") or [])}
-        if "ALL DAY.bat" in self.plugin_off:
-            self.plugin_off.discard("ALL DAY.bat")
-            self.plugin_off.add("ALL DAY.exe")
-        self.enabled_plugins: list[str] = []
-        for raw in cfg.get("enabled_plugins") or []:
-            name = str(raw)
-            if name.lower() == "all day.bat":
-                name = "ALL DAY.exe"
-            if Path(name).suffix.lower() in {".exe", ".bat"}:
-                self.enabled_plugins.append(name)
-        for name in rp.bundled_plugin_names():
-            if name not in self.plugin_off and name not in self.enabled_plugins:
-                self.enabled_plugins.append(name)
         self.test_mode_var = ctk.BooleanVar(value=bool(cfg.get("test_mode", False)))
         fflags = {**rff.DEFAULT_FFLAGS, **(cfg.get("fflags") or {})}
         self.unlock_fps_var = ctk.BooleanVar(value=bool(fflags.get("unlock_fps", False)))
@@ -301,8 +285,6 @@ class App(ctk.CTk):
         self.vulkan_var = ctk.BooleanVar(value=bool(fflags.get("prefer_vulkan", False)))
         self.gray_sky_var = ctk.BooleanVar(value=bool(fflags.get("gray_sky", False)))
         self.grass_var = ctk.BooleanVar(value=bool(fflags.get("freeze_grass", False)))
-        self.shader_glow_var = ctk.BooleanVar(value=bool(fflags.get("shader_glow", True)))
-        self.shader_reflection_var = ctk.BooleanVar(value=bool(fflags.get("shader_reflection", True)))
         self.custom_flags: dict[str, str] = {
             str(k): str(v) for k, v in (cfg.get("custom_fflags") or {}).items()
         }
@@ -314,7 +296,7 @@ class App(ctk.CTk):
         self._ready = False
         self._persist_job: str | None = None
         self._settings_tab = cfg.get("settings_tab") or "integrations"
-        if self._settings_tab == "robux":
+        if self._settings_tab in {"robux", "plugin", "shader"}:
             self._settings_tab = "integrations"
 
         self.home = ctk.CTkFrame(self, fg_color=BG)
@@ -481,14 +463,6 @@ class App(ctk.CTk):
             sidebar, "\uE735", "Korblox", lambda: self._show_tab("premium"), False
         )
         self.nav_items["premium"].pack(fill="x", padx=8)
-        self.nav_items["plugin"] = SidebarItem(
-            sidebar, "\uE8A5", "Plugin", lambda: self._show_tab("plugin"), False
-        )
-        self.nav_items["plugin"].pack(fill="x", padx=8)
-        self.nav_items["shader"] = SidebarItem(
-            sidebar, "\uE706", "Shader", lambda: self._show_tab("shader"), False
-        )
-        self.nav_items["shader"].pack(fill="x", padx=(22, 8))
 
         ctk.CTkFrame(body, width=1, fg_color=BORDER).pack(side="left", fill="y")
 
@@ -500,15 +474,11 @@ class App(ctk.CTk):
         self.software_page = ctk.CTkScrollableFrame(content, fg_color=BG, corner_radius=0)
         self.graphics_page = ctk.CTkScrollableFrame(content, fg_color=BG, corner_radius=0)
         self.premium_page = ctk.CTkFrame(content, fg_color=BG)
-        self.plugin_page = ctk.CTkFrame(content, fg_color=BG)
-        self.shader_page = ctk.CTkScrollableFrame(content, fg_color=BG, corner_radius=0)
         self._build_integrations(self.integrations_page)
         self._build_fastflag(self.fastflag_page)
         self._build_software(self.software_page)
         self._build_graphics(self.graphics_page)
         self._build_premium(self.premium_page)
-        self._build_plugin(self.plugin_page)
-        self._build_shader(self.shader_page)
 
         footer = ctk.CTkFrame(self.settings, fg_color=FOOTER_BG, height=64, corner_radius=0)
         footer.pack(side="bottom", fill="x")
@@ -993,240 +963,6 @@ class App(ctk.CTk):
             wraplength=520,
         ).pack(fill="x", pady=(8, 0))
 
-    def _build_plugin(self, parent):
-        self.plugin_list_view = False
-        tools = ctk.CTkFrame(parent, fg_color="transparent")
-        tools.pack(fill="x", padx=22, pady=(18, 10))
-        self.plugin_search_var = ctk.StringVar(value="")
-        self.plugin_search_var.trace_add("write", lambda *_: self._rebuild_plugin_list())
-        search = ctk.CTkEntry(
-            tools,
-            textvariable=self.plugin_search_var,
-            placeholder_text="Search for plugins...",
-            height=40,
-            corner_radius=8,
-            fg_color="#1f1f1f",
-            border_color=BORDER,
-            text_color=TEXT,
-            font=ctk.CTkFont(family="Segoe UI", size=14),
-        )
-        search.pack(side="left", fill="x", expand=True)
-        for glyph, cmd in (("\uE8CB", self._open_plugin_store), ("\uE8A1", self._toggle_plugin_view)):
-            ctk.CTkButton(
-                tools,
-                text=glyph,
-                command=cmd,
-                width=40,
-                height=40,
-                corner_radius=8,
-                fg_color="#1f1f1f",
-                hover_color=SURFACE_HOVER,
-                border_width=1,
-                border_color=BORDER,
-                text_color=TEXT,
-                font=ctk.CTkFont(family=icon_family(), size=16),
-            ).pack(side="left", padx=(8, 0))
-
-        self.plugin_list = ctk.CTkScrollableFrame(parent, fg_color=BG, corner_radius=0)
-        self.plugin_list.pack(fill="both", expand=True, padx=14, pady=(0, 16))
-        self.plugin_fab = ctk.CTkButton(
-            parent,
-            text="Create a New Plugin",
-            command=self._add_plugin_file,
-            height=40,
-            width=188,
-            corner_radius=20,
-            fg_color=PURPLE_BTN,
-            hover_color=PURPLE_BTN_HOVER,
-            text_color=TEXT,
-            font=ctk.CTkFont(family="Segoe UI Semibold", size=13),
-        )
-        self.plugin_fab.place(relx=1.0, rely=1.0, x=-18, y=-18, anchor="se")
-        self._rebuild_plugin_list()
-        self.after(300, self._hook_plugin_drop)
-
-    def _build_shader(self, parent):
-        self._page_header(
-            parent,
-            "\uE706",
-            "Shader",
-            "Glow e reflection sul tuo client, si applicano quando avvii il gioco.",
-        )
-        card = self._card(parent)
-        self._switch_row(
-            card,
-            "Glow",
-            "Luci più forti e qualità alta (bloom del gioco). Solo tu lo vedi.",
-            self.shader_glow_var,
-        )
-        self._switch_row(
-            card,
-            "Reflection",
-            "Texture al massimo, anti-aliasing e dettaglio. Superfici più nitide e lucide.",
-            self.shader_reflection_var,
-        )
-        ctk.CTkLabel(
-            card,
-            text="Se Glow o Reflection sono accesi, vincono su Graphics (low quality, texture basse, no MSAA). Non è un injector: gli altri giocatori non lo vedono.",
-            font=ctk.CTkFont(family="Segoe UI", size=12),
-            text_color=MUTED,
-            anchor="w",
-            wraplength=520,
-            justify="left",
-        ).pack(fill="x", pady=(8, 0))
-
-    def _open_plugin_store(self):
-        webbrowser.open("https://sisoseller.github.io/solax/plugins.html")
-
-    def _toggle_plugin_view(self):
-        self.plugin_list_view = not getattr(self, "plugin_list_view", False)
-        self._rebuild_plugin_list()
-
-    def _plugin_enabled(self, name: str) -> bool:
-        return name in self.enabled_plugins
-
-    def _toggle_plugin(self, name: str, var: ctk.BooleanVar):
-        if var.get():
-            if name not in self.enabled_plugins:
-                self.enabled_plugins.append(name)
-            self.plugin_off.discard(name)
-        else:
-            self.enabled_plugins = [item for item in self.enabled_plugins if item != name]
-            self.plugin_off.add(name)
-        self._persist_ui()
-
-    def _import_plugin_path(self, path: Path):
-        try:
-            dest = rp.add_plugin(path)
-        except Exception as exc:
-            messagebox.showerror("Plugin", str(exc))
-            return
-        if dest.name not in self.enabled_plugins:
-            self.enabled_plugins.append(dest.name)
-        self._rebuild_plugin_list()
-        self._persist_ui()
-
-    def _add_plugin_file(self):
-        path = filedialog.askopenfilename(
-            title="Scegli un plugin",
-            filetypes=[("Plugin", "*.exe;*.bat"), ("EXE", "*.exe"), ("BAT", "*.bat")],
-        )
-        if path:
-            self._import_plugin_path(Path(path))
-
-    def _remove_plugin_file(self, name: str):
-        if rp.is_always_day(name) or rp.is_bundled(name):
-            self.enabled_plugins = [item for item in self.enabled_plugins if item != name]
-            self.plugin_off.add("ALL DAY.exe")
-            self._rebuild_plugin_list()
-            self._persist_ui()
-            return
-        rp.remove_plugin(name)
-        self.enabled_plugins = [item for item in self.enabled_plugins if item != name]
-        self._rebuild_plugin_list()
-        self._persist_ui()
-
-    def _plugin_details(self, path: Path):
-        messagebox.showinfo(
-            rp.display_name(path),
-            f"{rp.display_name(path)}\n\n{rp.description(path)}\n\nFile: {path.name}",
-        )
-
-    def _hook_plugin_drop(self):
-        if getattr(self, "_plugin_drop_hooked", False):
-            return
-        try:
-            import windnd
-        except ImportError:
-            return
-        try:
-            windnd.hook_dropfiles(self.plugin_page, func=self._on_plugin_drop)
-            self._plugin_drop_hooked = True
-        except Exception:
-            pass
-
-    def _on_plugin_drop(self, files):
-        for item in files:
-            raw = item.decode("utf-8", errors="ignore") if isinstance(item, (bytes, bytearray)) else str(item)
-            path = Path(raw)
-            if path.suffix.lower() in {".bat", ".exe"} and path.is_file():
-                self._import_plugin_path(path)
-
-    def _rebuild_plugin_list(self):
-        if not hasattr(self, "plugin_list"):
-            return
-        for child in self.plugin_list.winfo_children():
-            child.destroy()
-        plugins = rp.list_plugins()
-        known = {p.name for p in plugins}
-        self.enabled_plugins = [name for name in self.enabled_plugins if name in known]
-        query = (self.plugin_search_var.get() if hasattr(self, "plugin_search_var") else "").strip().lower()
-        if query:
-            plugins = [p for p in plugins if query in rp.display_name(p).lower() or query in p.name.lower()]
-        if not plugins:
-            empty = ctk.CTkFrame(self.plugin_list, fg_color=SURFACE, corner_radius=12, border_width=1, border_color=BORDER)
-            empty.pack(fill="both", expand=True, padx=8, pady=24)
-            ctk.CTkLabel(
-                empty,
-                text="Nessun plugin",
-                font=ctk.CTkFont(family="Segoe UI Semibold", size=18),
-                text_color=TEXT,
-            ).pack(pady=(36, 6))
-            ctk.CTkLabel(
-                empty,
-                text="Trascina un .exe o .bat, oppure Create a New Plugin. Poi Rimuovi se non lo vuoi più.",
-                font=ctk.CTkFont(family="Segoe UI", size=13),
-                text_color=MUTED,
-                justify="center",
-            ).pack(pady=(0, 36), padx=24)
-            empty.bind("<Button-1>", lambda _e: self._add_plugin_file())
-            return
-        grid = ctk.CTkFrame(self.plugin_list, fg_color="transparent")
-        grid.pack(fill="both", expand=True)
-        cols = 1 if getattr(self, "plugin_list_view", False) else 3
-        wrap = 720 if cols == 1 else 220
-        for col in range(cols):
-            grid.grid_columnconfigure(col, weight=1)
-        for index, path in enumerate(plugins):
-            card = ctk.CTkFrame(grid, fg_color=SURFACE, corner_radius=12, border_width=1, border_color=BORDER)
-            card.grid(row=index // cols, column=index % cols, sticky="nsew", padx=8, pady=8)
-            inner = ctk.CTkFrame(card, fg_color="transparent")
-            inner.pack(fill="both", expand=True, padx=16, pady=14)
-            ctk.CTkLabel(
-                inner,
-                text=rp.display_name(path),
-                font=ctk.CTkFont(family="Segoe UI Semibold", size=16),
-                text_color=TEXT,
-                anchor="w",
-            ).pack(fill="x")
-            ctk.CTkLabel(
-                inner,
-                text=rp.description(path),
-                font=ctk.CTkFont(family="Segoe UI", size=12),
-                text_color=MUTED,
-                anchor="w",
-                justify="left",
-                wraplength=wrap,
-            ).pack(fill="x", pady=(6, 14))
-            bottom = ctk.CTkFrame(inner, fg_color="transparent")
-            bottom.pack(fill="x", side="bottom")
-            FooterButton(bottom, "Details", lambda p=path: self._plugin_details(p), width=84).pack(side="left")
-            FooterButton(bottom, "Remove", lambda n=path.name: self._remove_plugin_file(n), width=84).pack(side="left", padx=(8, 0))
-            var = ctk.BooleanVar(value=self._plugin_enabled(path.name))
-            ctk.CTkSwitch(
-                bottom,
-                text="",
-                variable=var,
-                command=lambda n=path.name, v=var: self._toggle_plugin(n, v),
-                progress_color="#3b82f6",
-                button_color=TEXT,
-                fg_color="#3a3a3a",
-                width=44,
-                switch_width=36,
-            ).pack(side="right")
-        if getattr(self, "plugin_fab", None) is not None:
-            self.plugin_fab.lift()
-
     def show_home(self):
         self._persist_ui()
         self._page = "home"
@@ -1259,8 +995,6 @@ class App(ctk.CTk):
             "software": self.software_page,
             "graphics": self.graphics_page,
             "premium": self.premium_page,
-            "plugin": self.plugin_page,
-            "shader": self.shader_page,
         }
         for page in pages.values():
             page.pack_forget()
@@ -1437,8 +1171,6 @@ class App(ctk.CTk):
                 "last_font_name": self.selected_family or cfg.get("last_font_name"),
                 "use_headless": False,
                 "use_korblox": bool(self.use_korblox_var.get()),
-                "enabled_plugins": list(self.enabled_plugins),
-                "plugin_off": sorted(self.plugin_off),
                 "test_mode": bool(self.test_mode_var.get()),
                 "settings_tab": self._settings_tab,
                 "fflags": {
@@ -1458,12 +1190,16 @@ class App(ctk.CTk):
                     "prefer_vulkan": bool(self.vulkan_var.get()),
                     "gray_sky": bool(self.gray_sky_var.get()),
                     "freeze_grass": bool(self.grass_var.get()),
-                    "shader_glow": bool(self.shader_glow_var.get()),
-                    "shader_reflection": bool(self.shader_reflection_var.get()),
                 },
                 "custom_fflags": dict(self.custom_flags),
             }
         )
+        cfg.pop("enabled_plugins", None)
+        cfg.pop("plugin_off", None)
+        fflags = cfg.get("fflags")
+        if isinstance(fflags, dict):
+            fflags.pop("shader_glow", None)
+            fflags.pop("shader_reflection", None)
         return cfg
 
     def _bind_persist(self):
@@ -1487,8 +1223,6 @@ class App(ctk.CTk):
             self.vulkan_var,
             self.gray_sky_var,
             self.grass_var,
-            self.shader_glow_var,
-            self.shader_reflection_var,
         )
         for var in watched:
             var.trace_add("write", lambda *_: self._schedule_persist())
@@ -1561,8 +1295,6 @@ class App(ctk.CTk):
         font_path = self.selected_font
         use_font = bool(cfg.get("use_custom_font"))
         use_korblox = bool(cfg.get("use_korblox"))
-        enabled_plugins = list(cfg.get("enabled_plugins") or [])
-        use_always_day = rp.has_always_day(enabled_plugins)
         fflags = cfg.get("fflags") or {}
         custom_flags = cfg.get("custom_fflags") or {}
 
@@ -1595,22 +1327,13 @@ class App(ctk.CTk):
                             pass
 
                     step("Font", restore_font)
-                if use_always_day:
-                    self.after(0, lambda: self.gray_sky_var.set(False))
-                    fflags["gray_sky"] = False
-                    step("Cielo", lambda: rm.apply_always_day(install))
-                else:
-                    step("Cielo", lambda: rm.restore_sky(install))
+                step("Cielo", lambda: rm.restore_sky(install))
                 step("Shift lock", lambda: rm.restore_shift_lock(install))
                 step("Heads", lambda: rh.restore_headless(install))
                 if use_korblox:
                     step("Korblox", lambda: rk.apply_korblox(install))
                 else:
                     step("Korblox", lambda: rk.restore_korblox(install))
-                if enabled_plugins:
-                    plugin_warns = rp.run_plugins(enabled_plugins, cwd=install.version_dir)
-                    warnings.extend(plugin_warns)
-                shader_on = bool(fflags.get("shader_glow") or fflags.get("shader_reflection"))
                 step(
                     "FastFlag",
                     lambda: rff.apply_fflags(
@@ -1618,11 +1341,8 @@ class App(ctk.CTk):
                         install,
                         custom=custom_flags,
                         previous_custom_keys=old_custom_keys,
-                        disable_gray_sky=bool(use_always_day or fflags.get("shader_glow")),
                     ),
                 )
-                if shader_on:
-                    step("Shader", rff.apply_shader_quality)
                 if launch:
                     rf.launch_roblox(install)
                     launched = True
@@ -1690,22 +1410,9 @@ if __name__ == "__main__":
     def exe_stem() -> str:
         return Path(sys.argv[0]).stem.lower().replace("-", " ").replace("_", " ")
 
-    def run_all_day_cli() -> int:
-        try:
-            rm.apply_always_day()
-            return 0
-        except Exception as exc:
-            try:
-                ctypes.windll.user32.MessageBoxW(0, str(exc), "ALL DAY", 0x10)
-            except Exception:
-                pass
-            return 1
-
     def is_auto_launch() -> bool:
         if "--auto" in sys.argv:
             return True
         return exe_stem() in {"solax auto", "solax automatico"}
 
-    if exe_stem() in {"all day", "allday"}:
-        raise SystemExit(run_all_day_cli())
     App(auto=is_auto_launch()).mainloop()
