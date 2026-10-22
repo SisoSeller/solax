@@ -18,24 +18,26 @@ import roblox_headless as rh
 import roblox_korblox as rk
 import roblox_mods as rm
 
-VERSION = "1.1.6"
+VERSION = "1.1.7"
 FR_PRIVATE = 0x10
 
-BG = "#1a1a1a"
-SURFACE = "#2c2c2c"
-SURFACE_HOVER = "#353535"
-BORDER = "#3d3d3d"
-TEXT = "#ffffff"
-MUTED = "#9a9a9a"
-PURPLE = "#b794f6"
+BG = "#0b0b10"
+SURFACE = "#14141c"
+SURFACE_HOVER = "#1c1c28"
+INPUT = "#101018"
+BORDER = "#2c2c3a"
+TEXT = "#f5f5fa"
+MUTED = "#8e8ea0"
+PURPLE = "#c4b5fd"
 PURPLE_BTN = "#7c5cfc"
-PURPLE_BTN_HOVER = "#8f74ff"
-FOOTER_BG = "#141414"
-NAV_ACTIVE = "#252525"
-HOME_SIZE = "560x300"
-HOME_MIN = (520, 270)
-SETTINGS_SIZE = "1040x740"
-SETTINGS_MIN = (880, 600)
+PURPLE_BTN_HOVER = "#9174ff"
+FOOTER_BG = "#08080c"
+NAV_ACTIVE = "#1b1530"
+SWITCH_OFF = "#2e2e3c"
+HOME_SIZE = "620x400"
+HOME_MIN = (560, 360)
+SETTINGS_SIZE = "1080x760"
+SETTINGS_MIN = (900, 620)
 
 
 def resource_path(*parts: str) -> Path:
@@ -81,28 +83,40 @@ def bind_all(widget, sequence, handler) -> None:
 
 
 class MenuTile(ctk.CTkFrame):
-    def __init__(self, master, icon: str, title: str, command, subtitle: str | None = None, height: int = 56):
+    def __init__(
+        self,
+        master,
+        icon: str,
+        title: str,
+        command,
+        subtitle: str | None = None,
+        height: int = 64,
+        primary: bool = False,
+    ):
         super().__init__(
             master,
-            fg_color=SURFACE,
-            corner_radius=8,
-            border_width=1,
+            fg_color=PURPLE_BTN if primary else SURFACE,
+            corner_radius=16,
+            border_width=0 if primary else 1,
             border_color=BORDER,
             height=height,
             cursor="hand2",
         )
         self._command = command
+        self._primary = primary
         self.pack_propagate(False)
 
         inner = ctk.CTkFrame(self, fg_color="transparent")
-        inner.pack(fill="both", expand=True, padx=12, pady=8)
+        inner.pack(fill="both", expand=True, padx=16, pady=10)
+        icon_color = TEXT if primary else PURPLE
+        muted = "#e8e0ff" if primary else MUTED
 
         ctk.CTkLabel(
             inner,
             text=icon,
-            font=ctk.CTkFont(family=icon_family(), size=16),
-            text_color=TEXT,
-            width=22,
+            font=ctk.CTkFont(family=icon_family(), size=18),
+            text_color=icon_color,
+            width=24,
         ).pack(side="left")
 
         text_col = ctk.CTkFrame(inner, fg_color="transparent")
@@ -110,7 +124,7 @@ class MenuTile(ctk.CTkFrame):
         ctk.CTkLabel(
             text_col,
             text=title,
-            font=ctk.CTkFont(family="Segoe UI Semibold", size=14),
+            font=ctk.CTkFont(family="Segoe UI Semibold", size=15),
             text_color=TEXT,
             anchor="w",
         ).pack(fill="x")
@@ -119,7 +133,7 @@ class MenuTile(ctk.CTkFrame):
                 text_col,
                 text=subtitle,
                 font=ctk.CTkFont(family="Segoe UI", size=12),
-                text_color=MUTED,
+                text_color=muted,
                 anchor="w",
             ).pack(fill="x")
 
@@ -127,7 +141,7 @@ class MenuTile(ctk.CTkFrame):
             inner,
             text="\uE76C",
             font=ctk.CTkFont(family=icon_family(), size=12),
-            text_color=MUTED,
+            text_color=muted,
             width=16,
         ).pack(side="right")
 
@@ -147,11 +161,11 @@ class MenuTile(ctk.CTkFrame):
         return False
 
     def _on_enter(self, _event=None):
-        self.configure(fg_color=SURFACE_HOVER)
+        self.configure(fg_color=PURPLE_BTN_HOVER if self._primary else SURFACE_HOVER)
 
     def _on_leave(self, _event=None):
         if not self._contains_pointer():
-            self.configure(fg_color=SURFACE)
+            self.configure(fg_color=PURPLE_BTN if self._primary else SURFACE)
 
     def _on_click(self, _event=None):
         if self._command:
@@ -165,11 +179,11 @@ class SidebarItem(ctk.CTkFrame):
         self._selected = selected
         self.pack_propagate(False)
 
-        self.bar = ctk.CTkFrame(self, width=3, corner_radius=1, fg_color="transparent")
+        self.bar = ctk.CTkFrame(self, width=3, corner_radius=2, fg_color="transparent")
         self.bar.pack(side="left", fill="y", pady=8)
 
-        self.inner = ctk.CTkFrame(self, fg_color="transparent", corner_radius=6)
-        self.inner.pack(side="left", fill="both", expand=True, padx=(8, 10), pady=4)
+        self.inner = ctk.CTkFrame(self, fg_color="transparent", corner_radius=10)
+        self.inner.pack(side="left", fill="both", expand=True, padx=(8, 10), pady=3)
 
         row = ctk.CTkFrame(self.inner, fg_color="transparent")
         row.pack(fill="both", expand=True, padx=10)
@@ -189,12 +203,22 @@ class SidebarItem(ctk.CTkFrame):
         ).pack(side="left", padx=(10, 0))
 
         self.set_selected(selected)
+        bind_all(self, "<Enter>", self._on_enter)
+        bind_all(self, "<Leave>", self._on_leave)
         bind_all(self, "<Button-1>", lambda _e: self._command())
+
+    def _on_enter(self, _event=None):
+        if not self._selected:
+            self.inner.configure(fg_color=SURFACE_HOVER)
+
+    def _on_leave(self, _event=None):
+        if not self._selected:
+            self.inner.configure(fg_color="transparent")
 
     def set_selected(self, selected: bool) -> None:
         self._selected = selected
         if selected:
-            self.bar.configure(fg_color=PURPLE)
+            self.bar.configure(fg_color=PURPLE_BTN)
             self.inner.configure(fg_color=NAV_ACTIVE)
         else:
             self.bar.configure(fg_color="transparent")
@@ -209,8 +233,8 @@ class FooterButton(ctk.CTkButton):
                 text=text,
                 command=command,
                 width=width,
-                height=36,
-                corner_radius=8,
+                height=38,
+                corner_radius=12,
                 fg_color=PURPLE_BTN,
                 hover_color=PURPLE_BTN_HOVER,
                 text_color=TEXT,
@@ -222,8 +246,8 @@ class FooterButton(ctk.CTkButton):
                 text=text,
                 command=command,
                 width=width,
-                height=36,
-                corner_radius=8,
+                height=38,
+                corner_radius=12,
                 fg_color=SURFACE,
                 hover_color=SURFACE_HOVER,
                 border_width=1,
@@ -329,70 +353,71 @@ class App(ctk.CTk):
         self.destroy()
 
     def _build_home(self):
-        left = ctk.CTkFrame(self.home, fg_color=BG, width=170)
-        left.pack(side="left", fill="y", padx=(18, 8), pady=14)
-        left.pack_propagate(False)
+        shell = ctk.CTkFrame(self.home, fg_color=BG)
+        shell.pack(fill="both", expand=True, padx=18, pady=16)
 
-        title_row = ctk.CTkFrame(left, fg_color="transparent")
-        title_row.pack(fill="x", pady=(18, 0))
+        card = ctk.CTkFrame(
+            shell,
+            fg_color=SURFACE,
+            corner_radius=20,
+            border_width=1,
+            border_color=BORDER,
+        )
+        card.pack(fill="both", expand=True)
+
+        top = ctk.CTkFrame(card, fg_color="transparent")
+        top.pack(fill="x", padx=22, pady=(20, 4))
         logo = resource_path("website", "icon.png")
         if logo.is_file():
             try:
                 raw = Image.open(logo).convert("RGBA")
-                self._home_logo = ctk.CTkImage(light_image=raw, dark_image=raw, size=(42, 42))
-                ctk.CTkLabel(title_row, image=self._home_logo, text="").pack(side="left", padx=(0, 10))
+                self._home_logo = ctk.CTkImage(light_image=raw, dark_image=raw, size=(48, 48))
+                ctk.CTkLabel(top, image=self._home_logo, text="").pack(side="left", padx=(0, 12))
             except Exception:
                 pass
+        titles = ctk.CTkFrame(top, fg_color="transparent")
+        titles.pack(side="left", fill="x", expand=True)
         ctk.CTkLabel(
-            title_row,
+            titles,
             text="SolaX",
-            font=ctk.CTkFont(family="Segoe UI Semibold", size=26),
+            font=ctk.CTkFont(family="Segoe UI Semibold", size=28),
             text_color=TEXT,
             anchor="w",
-        ).pack(side="left")
-        ver_row = ctk.CTkFrame(left, fg_color="transparent")
-        ver_row.pack(fill="x", pady=(6, 0))
+        ).pack(fill="x")
         ctk.CTkLabel(
-            ver_row,
-            text=f"Version {VERSION}",
-            font=ctk.CTkFont(family="Segoe UI", size=11),
+            titles,
+            text="Locale. Solo sul tuo client.",
+            font=ctk.CTkFont(family="Segoe UI", size=13),
             text_color=MUTED,
             anchor="w",
-        ).pack(side="left")
+        ).pack(fill="x")
         ctk.CTkLabel(
-            ver_row,
-            text="UPDATE",
-            font=ctk.CTkFont(family="Segoe UI Semibold", size=10),
+            top,
+            text=f"v{VERSION}",
+            font=ctk.CTkFont(family="Segoe UI Semibold", size=11),
             text_color=TEXT,
             fg_color=PURPLE_BTN,
-            corner_radius=8,
-            width=62,
-            height=20,
-        ).pack(side="left", padx=(8, 0))
+            corner_radius=10,
+            width=64,
+            height=24,
+        ).pack(side="right")
 
-        about_row = ctk.CTkFrame(left, fg_color="transparent", cursor="hand2")
-        about_row.pack(side="bottom", fill="x", pady=(0, 4))
-        ctk.CTkLabel(
-            about_row,
-            text="\uE946",
-            font=ctk.CTkFont(family=icon_family(), size=12),
-            text_color=PURPLE,
-            width=18,
-            cursor="hand2",
-        ).pack(side="left")
-        about = ctk.CTkLabel(
-            about_row,
-            text="About SolaX",
-            font=ctk.CTkFont(family="Segoe UI", size=11),
-            text_color=PURPLE,
-            anchor="w",
-            cursor="hand2",
-        )
-        about.pack(side="left")
-        bind_all(about_row, "<Button-1>", lambda _e: self._about())
+        actions = ctk.CTkFrame(card, fg_color="transparent")
+        actions.pack(fill="x", padx=22, pady=(18, 8))
+        MenuTile(
+            actions,
+            "\uE7FC",
+            "Launch Roblox",
+            self.launch_from_home,
+            "Applica le impostazioni e avvia",
+            primary=True,
+        ).pack(fill="x", pady=(0, 10))
+        MenuTile(actions, "\uE713", "Settings", self.show_settings, "Font, FastFlag, Graphics, Korblox").pack(fill="x")
 
-        web_row = ctk.CTkFrame(left, fg_color="transparent", cursor="hand2")
-        web_row.pack(side="bottom", fill="x", pady=(0, 2))
+        links = ctk.CTkFrame(card, fg_color="transparent")
+        links.pack(side="bottom", fill="x", padx=22, pady=(0, 16))
+        web_row = ctk.CTkFrame(links, fg_color="transparent", cursor="hand2")
+        web_row.pack(side="left")
         ctk.CTkLabel(
             web_row,
             text="\uE774",
@@ -401,38 +426,68 @@ class App(ctk.CTk):
             width=18,
             cursor="hand2",
         ).pack(side="left")
-        web = ctk.CTkLabel(
+        ctk.CTkLabel(
             web_row,
             text="Website",
-            font=ctk.CTkFont(family="Segoe UI", size=11),
+            font=ctk.CTkFont(family="Segoe UI", size=12),
             text_color=PURPLE,
             anchor="w",
             cursor="hand2",
-        )
-        web.pack(side="left")
+        ).pack(side="left")
         bind_all(web_row, "<Button-1>", lambda _e: self._open_website())
-
-        right = ctk.CTkFrame(self.home, fg_color=BG)
-        right.pack(side="left", fill="both", expand=True, padx=(4, 16), pady=18)
-
-        MenuTile(right, "\uE7FC", "Launch Roblox", self.launch_from_home).pack(fill="x", pady=(18, 8))
-        MenuTile(right, "\uE713", "Settings", self.show_settings).pack(fill="x")
+        about_row = ctk.CTkFrame(links, fg_color="transparent", cursor="hand2")
+        about_row.pack(side="left", padx=(18, 0))
+        ctk.CTkLabel(
+            about_row,
+            text="\uE946",
+            font=ctk.CTkFont(family=icon_family(), size=12),
+            text_color=PURPLE,
+            width=18,
+            cursor="hand2",
+        ).pack(side="left")
+        ctk.CTkLabel(
+            about_row,
+            text="About",
+            font=ctk.CTkFont(family="Segoe UI", size=12),
+            text_color=PURPLE,
+            anchor="w",
+            cursor="hand2",
+        ).pack(side="left")
+        bind_all(about_row, "<Button-1>", lambda _e: self._about())
 
     def _build_settings(self):
         body = ctk.CTkFrame(self.settings, fg_color=BG)
         body.pack(fill="both", expand=True)
 
-        sidebar = ctk.CTkFrame(body, fg_color=BG, width=220)
+        sidebar = ctk.CTkFrame(body, fg_color="#09090e", width=228)
         sidebar.pack(side="left", fill="y")
         sidebar.pack_propagate(False)
+
+        brand = ctk.CTkFrame(sidebar, fg_color="transparent")
+        brand.pack(fill="x", padx=18, pady=(18, 6))
+        logo = resource_path("website", "icon.png")
+        if logo.is_file():
+            try:
+                raw = Image.open(logo).convert("RGBA")
+                self._settings_logo = ctk.CTkImage(light_image=raw, dark_image=raw, size=(28, 28))
+                ctk.CTkLabel(brand, image=self._settings_logo, text="").pack(side="left", padx=(0, 8))
+            except Exception:
+                pass
+        ctk.CTkLabel(
+            brand,
+            text="SolaX",
+            font=ctk.CTkFont(family="Segoe UI Semibold", size=16),
+            text_color=TEXT,
+            anchor="w",
+        ).pack(side="left")
 
         ctk.CTkLabel(
             sidebar,
             text="SETTINGS",
-            font=ctk.CTkFont(family="Segoe UI", size=11),
+            font=ctk.CTkFont(family="Segoe UI Semibold", size=10),
             text_color=MUTED,
             anchor="w",
-        ).pack(fill="x", padx=22, pady=(22, 10))
+        ).pack(fill="x", padx=22, pady=(14, 8))
 
         self.nav_items["integrations"] = SidebarItem(
             sidebar, "\uE710", "Integrations", lambda: self._show_tab("integrations"), True
@@ -450,7 +505,7 @@ class App(ctk.CTk):
         ctk.CTkLabel(
             sidebar,
             text="BOOST",
-            font=ctk.CTkFont(family="Segoe UI", size=11),
+            font=ctk.CTkFont(family="Segoe UI Semibold", size=10),
             text_color=MUTED,
             anchor="w",
         ).pack(fill="x", padx=22, pady=(18, 8))
@@ -480,7 +535,7 @@ class App(ctk.CTk):
         self._build_graphics(self.graphics_page)
         self._build_premium(self.premium_page)
 
-        footer = ctk.CTkFrame(self.settings, fg_color=FOOTER_BG, height=64, corner_radius=0)
+        footer = ctk.CTkFrame(self.settings, fg_color=FOOTER_BG, height=68, corner_radius=0)
         footer.pack(side="bottom", fill="x")
         footer.pack_propagate(False)
 
@@ -498,7 +553,7 @@ class App(ctk.CTk):
             variable=self.test_mode_var,
             progress_color=PURPLE_BTN,
             button_color=TEXT,
-            fg_color="#3a3a3a",
+            fg_color=SWITCH_OFF,
             width=44,
             switch_width=36,
         ).pack(side="left")
@@ -531,7 +586,7 @@ class App(ctk.CTk):
             title_row,
             text=icon,
             font=ctk.CTkFont(family=icon_family(), size=22),
-            text_color=TEXT,
+            text_color=PURPLE,
             width=28,
         ).pack(side="left")
         ctk.CTkLabel(
@@ -553,7 +608,7 @@ class App(ctk.CTk):
         card = ctk.CTkFrame(
             parent,
             fg_color=SURFACE,
-            corner_radius=10,
+            corner_radius=16,
             border_width=1,
             border_color=BORDER,
         )
@@ -589,7 +644,7 @@ class App(ctk.CTk):
             variable=variable,
             progress_color=PURPLE_BTN,
             button_color=TEXT,
-            fg_color="#3a3a3a",
+            fg_color=SWITCH_OFF,
             width=44,
             switch_width=36,
         ).pack(side="right", padx=(12, 0))
@@ -599,7 +654,7 @@ class App(ctk.CTk):
             parent,
             "\uE710",
             "Integrations",
-            "Font, cielo e shift lock — solo su Roblox",
+            "Font delle scritte — solo sul tuo client",
         )
 
         font_card = self._card(parent)
@@ -615,8 +670,8 @@ class App(ctk.CTk):
             textvariable=self.font_search_var,
             placeholder_text="Cerca font…",
             height=34,
-            corner_radius=8,
-            fg_color="#1f1f1f",
+            corner_radius=12,
+            fg_color=INPUT,
             border_color=BORDER,
             text_color=TEXT,
         )
@@ -637,8 +692,8 @@ class App(ctk.CTk):
         self.font_list = ctk.CTkScrollableFrame(
             font_card,
             height=230,
-            fg_color="#1f1f1f",
-            corner_radius=8,
+            fg_color=INPUT,
+            corner_radius=12,
             border_width=1,
             border_color=BORDER,
         )
@@ -657,7 +712,7 @@ class App(ctk.CTk):
     def _png_picker_row(self, parent, path: Path | None, button_text: str, command):
         row = ctk.CTkFrame(parent, fg_color="transparent")
         row.pack(fill="x", pady=(8, 0))
-        preview = ctk.CTkLabel(row, text="", width=72, height=72, fg_color="#1f1f1f", corner_radius=8)
+        preview = ctk.CTkLabel(row, text="", width=72, height=72, fg_color=INPUT, corner_radius=12)
         preview.pack(side="left", padx=(0, 12))
         texts = ctk.CTkFrame(row, fg_color="transparent")
         texts.pack(side="left", fill="x", expand=True)
@@ -722,8 +777,8 @@ class App(ctk.CTk):
             textvariable=self.flag_name_var,
             placeholder_text="Nome flag  es. DFFlagDisableDPIScale",
             height=34,
-            corner_radius=8,
-            fg_color="#1f1f1f",
+            corner_radius=12,
+            fg_color=INPUT,
             border_color=BORDER,
             text_color=TEXT,
         )
@@ -734,8 +789,8 @@ class App(ctk.CTk):
             placeholder_text="Valore  true",
             width=110,
             height=34,
-            corner_radius=8,
-            fg_color="#1f1f1f",
+            corner_radius=12,
+            fg_color=INPUT,
             border_color=BORDER,
             text_color=TEXT,
         )
@@ -745,8 +800,8 @@ class App(ctk.CTk):
         self.flag_list = ctk.CTkScrollableFrame(
             editor,
             height=180,
-            fg_color="#1f1f1f",
-            corner_radius=8,
+            fg_color=INPUT,
+            corner_radius=12,
             border_width=1,
             border_color=BORDER,
         )
@@ -814,8 +869,8 @@ class App(ctk.CTk):
             textvariable=self.fps_var,
             width=90,
             height=32,
-            corner_radius=8,
-            fg_color="#1f1f1f",
+            corner_radius=12,
+            fg_color=INPUT,
             border_color=BORDER,
             text_color=TEXT,
         )

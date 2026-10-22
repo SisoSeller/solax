@@ -6,318 +6,120 @@
   <title>SolaX</title>
   <link rel="icon" href="favicon.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #0e0e10;
-      --panel: #16161a;
-      --line: #2a2a32;
-      --text: #f4f4f7;
-      --muted: #9a9aa8;
+      --bg: #07070b;
+      --panel: rgba(18, 18, 26, 0.72);
+      --panel-solid: #12121a;
+      --line: rgba(255, 255, 255, 0.08);
+      --text: #f6f6fb;
+      --muted: #9a9aaf;
       --purple: #7c5cfc;
-      --purple-soft: #b794f6;
+      --purple-soft: #c4b5fd;
+      --glow: rgba(124, 92, 252, 0.45);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; }
+    html { scroll-behavior: smooth; }
     body {
-      font-family: "Segoe UI", system-ui, sans-serif;
-      background:
-        radial-gradient(900px 500px at 50% 18%, rgba(124, 92, 252, 0.22), transparent 60%),
-        var(--bg);
+      font-family: Outfit, "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
       color: var(--text);
       min-height: 100%;
+      overflow-x: hidden;
     }
+    .aurora {
+      pointer-events: none;
+      position: fixed;
+      inset: -20%;
+      z-index: 0;
+      background:
+        radial-gradient(48% 42% at 50% -8%, rgba(124, 92, 252, 0.38), transparent 58%),
+        radial-gradient(28% 32% at 12% 78%, rgba(88, 48, 210, 0.18), transparent 70%),
+        radial-gradient(24% 28% at 88% 62%, rgba(168, 85, 247, 0.14), transparent 68%);
+    }
+    .aurora::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.45'/%3E%3C/svg%3E");
+      opacity: 0.035;
+      mix-blend-mode: overlay;
+    }
+    .wrap { position: relative; z-index: 1; }
     .top {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
       z-index: 50;
+      width: max-content;
+      max-width: calc(100% - 28px);
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 18px 24px;
-      pointer-events: none;
-      transition: opacity 0.25s ease, transform 0.25s ease;
-    }
-    .top.is-hidden {
-      opacity: 0;
-      transform: translateY(-120%);
-      pointer-events: none !important;
-    }
-    .top.is-hidden * {
-      pointer-events: none !important;
-    }
-    .top a, .top button {
-      pointer-events: auto;
+      justify-content: center;
+      gap: 28px;
+      padding: 10px 12px 10px 16px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(10, 10, 16, 0.72);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
     }
     .brand {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       text-decoration: none;
       color: var(--text);
       font-weight: 700;
-      letter-spacing: 0.04em;
-      z-index: 2;
+      letter-spacing: 0.12em;
+      font-size: 14px;
     }
     .brand img {
-      width: 36px;
-      height: 36px;
+      width: 32px;
+      height: 32px;
       border-radius: 10px;
+      box-shadow: 0 0 18px var(--glow);
     }
     .top-center {
-      position: absolute;
-      left: 50%;
-      top: 18px;
-      transform: translateX(-50%);
       display: flex;
       align-items: center;
-      gap: 10px;
-      z-index: 61;
+      gap: 8px;
+    }
+    .download, .review, .discord {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      text-decoration: none;
+      color: #fff;
+      transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
     }
     .download {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 12px 20px;
-      border-radius: 10px;
-      color: #fff !important;
-      text-decoration: none;
-      background: var(--purple);
-      font-size: 15px;
-      font-weight: 700;
-      box-shadow: 0 8px 24px rgba(124, 92, 252, 0.55);
-      white-space: nowrap;
+      background: linear-gradient(180deg, #9174ff, var(--purple));
+      box-shadow: 0 8px 24px var(--glow);
+      border: 0;
     }
-    .download:hover { background: #8f74ff; }
-    .review, .login {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 12px 20px;
-      border-radius: 10px;
-      color: #fff;
+    .download:hover { transform: translateY(-1px); box-shadow: 0 12px 28px var(--glow); }
+    .review, .discord {
       background: transparent;
-      border: 1px solid var(--purple);
-      font-size: 15px;
-      font-weight: 700;
-      font-family: inherit;
-      cursor: pointer;
-      white-space: nowrap;
-      text-decoration: none;
-    }
-    .review:hover, .login:hover { background: var(--purple); }
-    .login { margin-left: auto; z-index: 2; }
-    .discord {
-      display: inline-flex;
-      align-items: center;
-      padding: 10px 16px;
-      border: 1px solid #3d3d4a;
-      border-radius: 10px;
+      border: 1px solid var(--line);
       color: var(--text);
-      text-decoration: none;
-      background: rgba(22, 22, 26, 0.8);
-      font-size: 14px;
-      font-weight: 600;
     }
-    .discord:hover {
-      border-color: var(--purple);
+    .review:hover, .discord:hover {
+      border-color: rgba(124, 92, 252, 0.7);
+      background: rgba(124, 92, 252, 0.12);
       color: var(--purple-soft);
     }
-    .modal-bg {
-      display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 80;
-      background: rgba(0, 0, 0, 0.62);
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-    }
-    .modal-bg.open { display: flex; }
-    .modal {
-      width: min(440px, 100%);
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 22px;
-      text-align: left;
-    }
-    .modal.wide { width: min(520px, 100%); }
-    .modal.panel {
-      width: min(640px, 100%);
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-    .modal h3 { font-size: 20px; margin-bottom: 6px; }
-    .modal .hint { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
-    .modal label {
-      display: block;
-      font-size: 12px;
-      color: var(--muted);
-      margin-bottom: 6px;
-    }
-    .modal input, .modal textarea, .modal select {
-      width: 100%;
-      margin-bottom: 12px;
-      padding: 10px 12px;
-      border-radius: 10px;
-      border: 1px solid var(--line);
-      background: #121216;
-      color: var(--text);
-      font-family: inherit;
-      font-size: 14px;
-    }
-    .modal textarea { min-height: 120px; resize: vertical; }
-    .modal-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      margin-top: 6px;
-    }
-    .modal-actions button {
-      padding: 10px 16px;
-      border-radius: 10px;
-      border: 1px solid var(--line);
-      background: #121216;
-      color: var(--text);
-      font-weight: 700;
-      font-family: inherit;
-      cursor: pointer;
-    }
-    .modal-actions .send {
-      background: var(--purple);
-      border-color: var(--purple);
-      color: #fff;
-    }
-    .modal-actions .send:disabled { opacity: 0.55; cursor: not-allowed; }
-    #review-status, #login-status, #plugin-status {
-      min-height: 18px;
-      font-size: 13px;
-      color: var(--purple-soft);
-      margin-bottom: 8px;
-    }
-    .panel-block {
-      margin-top: 22px;
-      padding-top: 18px;
-      border-top: 1px solid var(--line);
-    }
-    .panel-block h4 {
-      font-size: 15px;
-      margin-bottom: 8px;
-    }
-    .admin-plugin {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      background: #121216;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 12px 14px;
-      margin-bottom: 8px;
-    }
-    .admin-plugin strong { display: block; }
-    .admin-plugin span { color: var(--muted); font-size: 12px; }
-    .admin-plugin button {
-      padding: 8px 12px;
-      border-radius: 8px;
-      border: 1px solid var(--line);
-      background: #1a1a20;
-      color: var(--text);
-      font-weight: 700;
-      font-family: inherit;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-    .store {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 0 24px 96px;
-    }
-    .store h2 {
-      font-size: 14px;
-      letter-spacing: 0.18em;
-      color: var(--muted);
-      margin-bottom: 8px;
-      text-transform: uppercase;
-    }
-    .store .intro {
-      color: var(--muted);
-      font-size: 14px;
-      margin-bottom: 18px;
-    }
-    .store-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 14px;
-    }
-    .store-card {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .store-card h3 { font-size: 18px; }
-    .store-card .desc {
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.55;
-      flex: 1;
-    }
-    .store-card .meta {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-top: 6px;
-    }
-    .price {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--purple-soft);
-      border: 1px solid rgba(124, 92, 252, 0.45);
-      border-radius: 999px;
-      padding: 4px 10px;
-    }
-    .price.paid {
-      color: #fff;
-      background: var(--purple);
-      border-color: var(--purple);
-    }
-    .store-card a, .store-card .off {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 8px 14px;
-      border-radius: 10px;
-      font-size: 13px;
-      font-weight: 700;
-      text-decoration: none;
-      color: #fff;
-      background: var(--purple);
-    }
-    .store-card .off {
-      background: transparent;
-      border: 1px solid var(--purple);
-    }
-    .store-empty { color: var(--muted); }
-    .stat {
-      background: #121216;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 22px;
-      margin-top: 8px;
-    }
-    .stat .num {
-      font-size: 42px;
-      font-weight: 700;
-      color: var(--purple-soft);
-    }
-    .stat .lbl { color: var(--muted); margin-top: 6px; }
     .hero {
       min-height: 100vh;
       display: flex;
@@ -325,71 +127,172 @@
       align-items: center;
       justify-content: center;
       text-align: center;
-      padding: 96px 24px 64px;
+      padding: 128px 24px 72px;
     }
-    .hero img.logo {
-      width: 112px;
-      height: 112px;
-      border-radius: 28px;
-      box-shadow: 0 20px 60px rgba(124, 92, 252, 0.35);
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(124, 92, 252, 0.35);
+      background: rgba(124, 92, 252, 0.12);
+      color: var(--purple-soft);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
       margin-bottom: 22px;
     }
+    .badge::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--purple);
+      box-shadow: 0 0 10px var(--purple);
+    }
+    .hero img.logo {
+      width: 96px;
+      height: 96px;
+      border-radius: 28px;
+      margin-bottom: 22px;
+      box-shadow: 0 20px 70px var(--glow);
+    }
     .hero h1 {
-      font-size: 72px;
-      letter-spacing: 0.08em;
-      font-weight: 700;
-      line-height: 1;
+      font-size: clamp(64px, 12vw, 108px);
+      letter-spacing: 0.06em;
+      font-weight: 800;
+      line-height: 0.9;
+      background: linear-gradient(180deg, #fff 20%, var(--purple-soft) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
     }
     .by {
-      margin-top: 18px;
-      font-size: 20px;
+      margin-top: 16px;
+      font-size: 13px;
       color: var(--purple-soft);
-      letter-spacing: 0.28em;
+      letter-spacing: 0.42em;
       text-transform: uppercase;
+      font-weight: 600;
+    }
+    .lead {
+      margin-top: 18px;
+      max-width: 540px;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.55;
+    }
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 22px;
+    }
+    .chip {
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+    .hero-cta {
+      margin-top: 28px;
+    }
+    .hero-cta .download {
+      padding: 14px 26px;
+      font-size: 15px;
     }
     .hero-video {
-      margin-top: 32px;
-      width: min(960px, 100%);
-      border-radius: 16px;
+      margin-top: 42px;
+      width: min(920px, 100%);
+      border-radius: 24px;
       overflow: hidden;
       border: 1px solid var(--line);
       background: #000;
-      box-shadow: 0 20px 60px rgba(124, 92, 252, 0.28);
+      box-shadow:
+        0 0 0 1px rgba(124, 92, 252, 0.12),
+        0 30px 80px rgba(124, 92, 252, 0.22);
     }
     .hero-video video {
       display: block;
       width: 100%;
       height: auto;
-      max-height: 70vh;
+      max-height: 64vh;
       background: #000;
     }
-    .changelog {
-      max-width: 720px;
-      margin: 0 auto;
-      padding: 0 24px 96px;
+    .features {
+      width: min(1040px, calc(100% - 48px));
+      margin: 0 auto 72px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
     }
-    .changelog h2 {
-      font-size: 14px;
-      letter-spacing: 0.18em;
+    .feature {
+      padding: 22px 20px;
+      border-radius: 20px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      backdrop-filter: blur(16px);
+      text-align: left;
+    }
+    .feature .mark {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 14px;
+      background: rgba(124, 92, 252, 0.16);
+      color: var(--purple-soft);
+      font-weight: 800;
+    }
+    .feature h3 { font-size: 16px; margin-bottom: 8px; }
+    .feature p { color: var(--muted); font-size: 13px; line-height: 1.55; }
+    .changelog {
+      width: min(760px, calc(100% - 48px));
+      margin: 0 auto;
+      padding: 0 0 96px;
+    }
+    .changelog h2, .features-title {
+      font-size: 12px;
+      letter-spacing: 0.22em;
       color: var(--muted);
       margin-bottom: 18px;
       text-transform: uppercase;
     }
     .card {
+      position: relative;
       background: var(--panel);
       border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 22px 24px;
-      margin-bottom: 14px;
+      border-radius: 18px;
+      padding: 22px 24px 22px 28px;
+      margin-bottom: 12px;
+      backdrop-filter: blur(16px);
+    }
+    .card::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 16px;
+      bottom: 16px;
+      width: 3px;
+      border-radius: 99px;
+      background: linear-gradient(180deg, var(--purple), transparent);
     }
     .card h3 { font-size: 20px; margin-bottom: 10px; }
     .card .tag {
       display: inline-block;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.1em;
       color: var(--purple-soft);
-      border: 1px solid rgba(124, 92, 252, 0.45);
+      border: 1px solid rgba(124, 92, 252, 0.4);
       border-radius: 999px;
       padding: 3px 8px;
       margin-left: 8px;
@@ -406,121 +309,250 @@
       line-height: 1.7;
     }
     .card li { margin: 2px 0; }
+    .foot {
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      padding: 0 24px 48px;
+      letter-spacing: 0.08em;
+    }
+    .modal-bg {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      background: rgba(0, 0, 0, 0.66);
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      backdrop-filter: blur(8px);
+    }
+    .modal-bg.open { display: flex; }
+    .modal {
+      width: min(440px, 100%);
+      background: var(--panel-solid);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 24px;
+      text-align: left;
+      box-shadow: 0 24px 80px rgba(124, 92, 252, 0.18);
+    }
+    .modal h3 { font-size: 22px; margin-bottom: 6px; }
+    .modal .hint { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+    .modal label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .modal input, .modal textarea {
+      width: 100%;
+      margin-bottom: 12px;
+      padding: 11px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #0c0c12;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 14px;
+    }
+    .modal textarea { min-height: 120px; resize: vertical; }
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .modal-actions button {
+      padding: 10px 16px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #121218;
+      color: var(--text);
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .modal-actions .send {
+      background: linear-gradient(180deg, #9174ff, var(--purple));
+      border-color: transparent;
+      color: #fff;
+    }
+    .modal-actions .send:disabled { opacity: 0.55; cursor: not-allowed; }
+    #review-status {
+      min-height: 18px;
+      font-size: 13px;
+      color: var(--purple-soft);
+      margin-bottom: 8px;
+    }
     @media (max-width: 860px) {
-      .top-center { position: static; transform: none; flex-wrap: wrap; justify-content: center; }
-      .top { flex-wrap: wrap; gap: 10px; pointer-events: auto; }
-      .login { margin-left: 0; }
+      .top {
+        flex-wrap: wrap;
+        border-radius: 22px;
+        justify-content: center;
+      }
+      .features { grid-template-columns: 1fr 1fr; }
+      .hero h1 { font-size: 64px; }
+    }
+    @media (max-width: 560px) {
+      .features { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <header class="top">
-    <a class="brand" href="#">
-      <img src="icon.png" alt="SolaX" />
-      SolaX
-    </a>
-    <div class="top-center">
-      <a class="download" href="https://github.com/SisoSeller/solax/releases/latest/download/SolaX-Setup.exe" download="SolaX-Setup.exe">Download</a>
-      <button type="button" class="review" id="review-open">Review</button>
-      <a class="discord" href="https://discord.gg/zq3fR5MxgU" target="_blank" rel="noopener">Discord</a>
-    </div>
-  </header>
+  <div class="aurora"></div>
+  <div class="wrap">
+    <header class="top">
+      <a class="brand" href="#">
+        <img src="icon.png" alt="SolaX" />
+        SOLAX
+      </a>
+      <div class="top-center">
+        <a class="download" href="https://github.com/SisoSeller/solax/releases/latest/download/SolaX-Setup.exe" download="SolaX-Setup.exe">Download</a>
+        <button type="button" class="review" id="review-open">Review</button>
+        <a class="discord" href="https://discord.gg/zq3fR5MxgU" target="_blank" rel="noopener">Discord</a>
+      </div>
+    </header>
 
-  <section class="hero">
-    <img class="logo" src="icon.png" alt="SolaX icon" />
-    <h1>SolaX</h1>
-    <p class="by">by KAPPA</p>
-    <div class="hero-video">
-      <video controls playsinline preload="metadata">
-        <source src="solax.mp4" type="video/mp4" />
-      </video>
-    </div>
-  </section>
+    <section class="hero">
+      <div class="badge">Local client</div>
+      <img class="logo" src="icon.png" alt="SolaX icon" />
+      <h1>SolaX</h1>
+      <p class="by">by KAPPA</p>
+      <p class="lead">Font, FastFlag, Graphics e Korblox. Tutto locale, solo sul tuo PC. Gli altri non vedono niente.</p>
+      <div class="chips">
+        <span class="chip">Custom font</span>
+        <span class="chip">FastFlag editor</span>
+        <span class="chip">Graphics</span>
+        <span class="chip">Korblox</span>
+      </div>
+      <div class="hero-cta">
+        <a class="download" href="https://github.com/SisoSeller/solax/releases/latest/download/SolaX-Setup.exe" download="SolaX-Setup.exe">Scarica SolaX-Setup.exe</a>
+      </div>
+      <div class="hero-video">
+        <video controls playsinline preload="metadata">
+          <source src="solax.mp4" type="video/mp4" />
+        </video>
+      </div>
+    </section>
 
-  <section class="changelog" id="changelog">
-    <h2>Changelog</h2>
+    <section class="features">
+      <article class="feature">
+        <div class="mark">Aa</div>
+        <h3>Font</h3>
+        <p>Sostituisci il font delle scritte nel client. Solo tu lo vedi.</p>
+      </article>
+      <article class="feature">
+        <div class="mark">F</div>
+        <h3>FastFlag</h3>
+        <p>Editor e switch: FPS, renderer, DPI. Si applicano all’avvio.</p>
+      </article>
+      <article class="feature">
+        <div class="mark">G</div>
+        <h3>Graphics</h3>
+        <p>Togli post, ombre, texture e particelle se vuoi più fluidità.</p>
+      </article>
+      <article class="feature">
+        <div class="mark">K</div>
+        <h3>Korblox</h3>
+        <p>Mesh della gamba destra, inclusa nel setup, solo sul tuo client.</p>
+      </article>
+    </section>
 
-    <article class="card">
-      <h3>1.0.0 <span class="tag">Beta Release</span></h3>
-      <ul>
-        <li>Prima versione di SolaX</li>
-        <li>Home: Launch Roblox e Settings</li>
-        <li>Integrations: font custom, cielo PNG, shift lock</li>
-        <li>FastFlag: preset e editor</li>
-        <li>Interfaccia scura viola, solo sul tuo client</li>
-      </ul>
-    </article>
+    <section class="changelog" id="changelog">
+      <h2>Changelog</h2>
 
-    <article class="card">
-      <h3>1.0.7 <span class="tag">Official Release</span></h3>
-      <ul>
-        <li>Korblox: sostituisce la mesh della gamba destra, inclusa nell’exe</li>
-        <li>Graphics: post, ombre, texture, particles, MSAA, luci, nuvole</li>
-        <li>Le impostazioni restano quando chiudi SolaX</li>
-        <li>SolaX Auto: avvio con un doppio clic, senza menu</li>
-        <li>Applica solo gli switch che accendi tu, senza toccare il resto di Roblox</li>
-        <li>SolaX.exe e SolaX Auto.exe</li>
-      </ul>
-    </article>
+      <article class="card">
+        <h3>1.0.0 <span class="tag">Beta Release</span></h3>
+        <ul>
+          <li>Prima versione di SolaX</li>
+          <li>Home: Launch Roblox e Settings</li>
+          <li>Integrations: font custom, cielo PNG, shift lock</li>
+          <li>FastFlag: preset e editor</li>
+          <li>Interfaccia scura viola, solo sul tuo client</li>
+        </ul>
+      </article>
 
-    <article class="card">
-      <h3>1.1.0 <span class="tag">Official Release</span></h3>
-      <ul>
-        <li>Korblox: cancella la gamba vecchia e poi mette la mesh nuova</li>
-        <li>FastFlag solo editor, Software con Unlock FPS, DPI, Vulkan</li>
-        <li>Plugin: li aggiungi tu nell’app; sul sito stanno in una pagina a parte</li>
-        <li>Icona SolaX nell’app e nell’exe</li>
-        <li>Download, Review e Discord in alto al centro</li>
-      </ul>
-    </article>
+      <article class="card">
+        <h3>1.0.7 <span class="tag">Official Release</span></h3>
+        <ul>
+          <li>Korblox: sostituisce la mesh della gamba destra, inclusa nell’exe</li>
+          <li>Graphics: post, ombre, texture, particles, MSAA, luci, nuvole</li>
+          <li>Le impostazioni restano quando chiudi SolaX</li>
+          <li>SolaX Auto: avvio con un doppio clic, senza menu</li>
+          <li>Applica solo gli switch che accendi tu, senza toccare il resto di Roblox</li>
+          <li>SolaX.exe e SolaX Auto.exe</li>
+        </ul>
+      </article>
 
-    <article class="card">
-      <h3>1.1.1 <span class="tag">Official Release</span></h3>
-      <ul>
-        <li>Plugin ALL DAY: cielo sempre giorno sul tuo client</li>
-      </ul>
-    </article>
+      <article class="card">
+        <h3>1.1.0 <span class="tag">Official Release</span></h3>
+        <ul>
+          <li>Korblox: cancella la gamba vecchia e poi mette la mesh nuova</li>
+          <li>FastFlag solo editor, Software con Unlock FPS, DPI, Vulkan</li>
+          <li>Plugin: li aggiungi tu nell’app; sul sito stanno in una pagina a parte</li>
+          <li>Icona SolaX nell’app e nell’exe</li>
+          <li>Download, Review e Discord in alto al centro</li>
+        </ul>
+      </article>
 
-    <article class="card">
-      <h3>1.1.2 <span class="tag">Official Release</span></h3>
-      <ul>
-        <li>ALL DAY è dentro SolaX.exe, senza download a parte</li>
-        <li>Si attiva da solo all’avvio: in Plugin puoi spegnerlo</li>
-      </ul>
-    </article>
+      <article class="card">
+        <h3>1.1.1 <span class="tag">Official Release</span></h3>
+        <ul>
+          <li>Plugin ALL DAY: cielo sempre giorno sul tuo client</li>
+        </ul>
+      </article>
 
-    <article class="card">
-      <h3>1.1.3 <span class="tag">Official Release</span></h3>
-      <ul>
-        <li>Download: SolaX-Setup.exe installa tutti i file, senza errori di pezzi mancanti</li>
-      </ul>
-    </article>
+      <article class="card">
+        <h3>1.1.2 <span class="tag">Official Release</span></h3>
+        <ul>
+          <li>ALL DAY è dentro SolaX.exe, senza download a parte</li>
+          <li>Si attiva da solo all’avvio: in Plugin puoi spegnerlo</li>
+        </ul>
+      </article>
 
-    <article class="card">
-      <h3>1.1.4 <span class="tag">Official Release</span></h3>
-      <ul>
-        <li>Tolti Custom sky e Shift lock PNG dall’app</li>
-        <li>Plugin: aggiungi .exe o .bat e puoi anche Rimuovi</li>
-        <li>ALL DAY.exe: cielo sempre questo, solo sul tuo client</li>
-      </ul>
-    </article>
+      <article class="card">
+        <h3>1.1.3 <span class="tag">Official Release</span></h3>
+        <ul>
+          <li>Download: SolaX-Setup.exe installa tutti i file, senza errori di pezzi mancanti</li>
+        </ul>
+      </article>
 
-    <article class="card">
-      <h3>1.1.5 <span class="tag">Official Release</span></h3>
-      <ul>
-        <li>Shader sotto Plugin: Glow e Reflection, si applicano all’avvio</li>
-        <li>Look più luminoso e nitido solo sul tuo client</li>
-      </ul>
-    </article>
+      <article class="card">
+        <h3>1.1.4 <span class="tag">Official Release</span></h3>
+        <ul>
+          <li>Tolti Custom sky e Shift lock PNG dall’app</li>
+          <li>Plugin: aggiungi .exe o .bat e puoi anche Rimuovi</li>
+          <li>ALL DAY.exe: cielo sempre questo, solo sul tuo client</li>
+        </ul>
+      </article>
 
-    <article class="card">
-      <h3>1.1.6 <span class="tag update">UPDATE</span></h3>
-      <ul>
-        <li>Tolti Plugin e Shader dall’app</li>
-        <li>Tolto Plugin dal sito</li>
-      </ul>
-    </article>
-  </section>
+      <article class="card">
+        <h3>1.1.5 <span class="tag">Official Release</span></h3>
+        <ul>
+          <li>Shader sotto Plugin: Glow e Reflection, si applicano all’avvio</li>
+          <li>Look più luminoso e nitido solo sul tuo client</li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <h3>1.1.6 <span class="tag">Official Release</span></h3>
+        <ul>
+          <li>Tolti Plugin e Shader dall’app</li>
+          <li>Tolto Plugin dal sito</li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <h3>1.1.7 <span class="tag update">UPDATE</span></h3>
+        <ul>
+          <li>Nuovo look del sito e dell’app</li>
+        </ul>
+      </article>
+    </section>
+
+    <p class="foot">SOLAX · LOCAL CLIENT · BY KAPPA</p>
+  </div>
 
   <div class="modal-bg" id="review-modal">
     <div class="modal">
@@ -618,12 +650,6 @@
             setStatus("Invio non riuscito. Riprova.");
           });
       });
-
-      var topbar = document.querySelector(".top");
-      window.addEventListener("scroll", function () {
-        if (window.scrollY > 80) topbar.classList.add("is-hidden");
-        else topbar.classList.remove("is-hidden");
-      }, { passive: true });
     })();
   </script>
 </body>
