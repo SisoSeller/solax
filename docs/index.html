@@ -11,15 +11,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #07070b;
-      --panel: rgba(18, 18, 26, 0.72);
-      --panel-solid: #12121a;
-      --line: rgba(255, 255, 255, 0.08);
-      --text: #f6f6fb;
-      --muted: #9a9aaf;
-      --purple: #7c5cfc;
-      --purple-soft: #c4b5fd;
-      --glow: rgba(124, 92, 252, 0.45);
+      --bg: #05070e;
+      --panel: rgba(10, 18, 36, 0.48);
+      --panel-solid: #0b1220;
+      --line: rgba(180, 220, 255, 0.14);
+      --text: #eef4ff;
+      --muted: #8b97b0;
+      --cyan: #64f0ff;
+      --violet: #6d7bff;
+      --glow: rgba(100, 240, 255, 0.32);
+      --jelly: cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
@@ -30,25 +31,66 @@
       min-height: 100%;
       overflow-x: hidden;
     }
+    html.fine-pointer, html.fine-pointer * { cursor: none !important; }
+    .jelly-cursor, .jelly-dot {
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 200;
+      will-change: transform;
+      display: none;
+    }
+    html.fine-pointer .jelly-cursor,
+    html.fine-pointer .jelly-dot { display: block; }
+    .jelly-cursor {
+      width: 44px;
+      height: 44px;
+      margin: -22px 0 0 -22px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.55), rgba(100,240,255,0.12) 42%, rgba(109,123,255,0.08) 70%, transparent 72%);
+      border: 1.5px solid rgba(180, 250, 255, 0.7);
+      box-shadow: 0 0 22px var(--glow), inset 0 0 12px rgba(100, 240, 255, 0.25);
+      backdrop-filter: blur(6px);
+    }
+    .jelly-dot {
+      width: 8px;
+      height: 8px;
+      margin: -4px 0 0 -4px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 0 10px var(--cyan);
+    }
     .aurora {
       pointer-events: none;
       position: fixed;
-      inset: -20%;
+      inset: -18%;
       z-index: 0;
       background:
-        radial-gradient(48% 42% at 50% -8%, rgba(124, 92, 252, 0.38), transparent 58%),
-        radial-gradient(28% 32% at 12% 78%, rgba(88, 48, 210, 0.18), transparent 70%),
-        radial-gradient(24% 28% at 88% 62%, rgba(168, 85, 247, 0.14), transparent 68%);
+        radial-gradient(46% 40% at 50% -6%, rgba(100, 240, 255, 0.16), transparent 58%),
+        radial-gradient(30% 34% at 8% 80%, rgba(109, 123, 255, 0.18), transparent 70%),
+        radial-gradient(26% 30% at 92% 58%, rgba(80, 200, 255, 0.1), transparent 68%);
+      animation: aurora-shift 16s ease-in-out infinite alternate;
+    }
+    @keyframes aurora-shift {
+      from { transform: translate3d(-2%, -1%, 0) scale(1); }
+      to { transform: translate3d(2%, 2%, 0) scale(1.04); }
     }
     .aurora::after {
       content: "";
       position: absolute;
       inset: 0;
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.45'/%3E%3C/svg%3E");
-      opacity: 0.035;
+      opacity: 0.03;
       mix-blend-mode: overlay;
     }
     .wrap { position: relative; z-index: 1; }
+    .glass {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      backdrop-filter: blur(22px) saturate(140%);
+      -webkit-backdrop-filter: blur(22px) saturate(140%);
+    }
     .top {
       position: fixed;
       top: 16px;
@@ -60,13 +102,10 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 28px;
+      gap: 22px;
       padding: 10px 12px 10px 16px;
-      border: 1px solid var(--line);
       border-radius: 999px;
-      background: rgba(10, 10, 16, 0.72);
-      backdrop-filter: blur(18px);
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35), 0 0 24px rgba(100, 240, 255, 0.08);
     }
     .brand {
       display: flex;
@@ -75,21 +114,21 @@
       text-decoration: none;
       color: var(--text);
       font-weight: 700;
-      letter-spacing: 0.12em;
-      font-size: 14px;
+      letter-spacing: 0.14em;
+      font-size: 13px;
     }
     .brand img {
       width: 32px;
       height: 32px;
       border-radius: 10px;
-      box-shadow: 0 0 18px var(--glow);
+      box-shadow: 0 0 16px var(--glow);
     }
     .top-center {
       display: flex;
       align-items: center;
       gap: 8px;
     }
-    .download, .review, .discord {
+    .download, .review, .discord, .sound-btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -98,28 +137,31 @@
       font-size: 13px;
       font-weight: 700;
       font-family: inherit;
-      cursor: pointer;
       white-space: nowrap;
       text-decoration: none;
       color: #fff;
-      transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+      transition: transform 0.45s var(--jelly), background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
     }
     .download {
-      background: linear-gradient(180deg, #9174ff, var(--purple));
+      background: linear-gradient(135deg, var(--cyan), var(--violet));
       box-shadow: 0 8px 24px var(--glow);
       border: 0;
+      color: #041018;
     }
-    .download:hover { transform: translateY(-1px); box-shadow: 0 12px 28px var(--glow); }
-    .review, .discord {
-      background: transparent;
+    .download:hover { transform: scale(1.07); }
+    .download:active { transform: scale(0.94); }
+    .review, .discord, .sound-btn {
+      background: rgba(255, 255, 255, 0.03);
       border: 1px solid var(--line);
       color: var(--text);
     }
-    .review:hover, .discord:hover {
-      border-color: rgba(124, 92, 252, 0.7);
-      background: rgba(124, 92, 252, 0.12);
-      color: var(--purple-soft);
+    .review:hover, .discord:hover, .sound-btn:hover {
+      transform: scale(1.08);
+      border-color: rgba(100, 240, 255, 0.55);
+      box-shadow: 0 0 18px rgba(100, 240, 255, 0.16);
     }
+    .review:active, .discord:active, .sound-btn:active { transform: scale(0.92); }
+    .sound-btn { width: 42px; padding: 10px 0; }
     .hero {
       min-height: 100vh;
       display: flex;
@@ -135,22 +177,28 @@
       gap: 8px;
       padding: 6px 12px;
       border-radius: 999px;
-      border: 1px solid rgba(124, 92, 252, 0.35);
-      background: rgba(124, 92, 252, 0.12);
-      color: var(--purple-soft);
+      border: 1px solid rgba(100, 240, 255, 0.28);
+      background: rgba(100, 240, 255, 0.08);
+      color: var(--cyan);
       font-size: 12px;
       font-weight: 600;
       letter-spacing: 0.16em;
       text-transform: uppercase;
       margin-bottom: 22px;
+      backdrop-filter: blur(12px);
     }
     .badge::before {
       content: "";
       width: 7px;
       height: 7px;
       border-radius: 50%;
-      background: var(--purple);
-      box-shadow: 0 0 10px var(--purple);
+      background: var(--cyan);
+      box-shadow: 0 0 10px var(--cyan);
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.45; transform: scale(0.7); }
     }
     .hero img.logo {
       width: 96px;
@@ -158,13 +206,18 @@
       border-radius: 28px;
       margin-bottom: 22px;
       box-shadow: 0 20px 70px var(--glow);
+      animation: float-logo 5s var(--jelly) infinite;
+    }
+    @keyframes float-logo {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
     }
     .hero h1 {
       font-size: clamp(64px, 12vw, 108px);
       letter-spacing: 0.06em;
       font-weight: 800;
       line-height: 0.9;
-      background: linear-gradient(180deg, #fff 20%, var(--purple-soft) 100%);
+      background: linear-gradient(180deg, #fff 10%, var(--cyan) 100%);
       -webkit-background-clip: text;
       background-clip: text;
       color: transparent;
@@ -172,7 +225,7 @@
     .by {
       margin-top: 16px;
       font-size: 13px;
-      color: var(--purple-soft);
+      color: var(--cyan);
       letter-spacing: 0.42em;
       text-transform: uppercase;
       font-weight: 600;
@@ -200,14 +253,12 @@
       font-size: 12px;
       font-weight: 600;
       letter-spacing: 0.04em;
+      backdrop-filter: blur(10px);
+      transition: transform 0.45s var(--jelly), border-color 0.2s ease;
     }
-    .hero-cta {
-      margin-top: 28px;
-    }
-    .hero-cta .download {
-      padding: 14px 26px;
-      font-size: 15px;
-    }
+    .chip:hover { transform: scale(1.1); border-color: var(--cyan); }
+    .hero-cta { margin-top: 28px; }
+    .hero-cta .download { padding: 14px 26px; font-size: 15px; }
     .hero-video {
       margin-top: 42px;
       width: min(920px, 100%);
@@ -215,10 +266,10 @@
       overflow: hidden;
       border: 1px solid var(--line);
       background: #000;
-      box-shadow:
-        0 0 0 1px rgba(124, 92, 252, 0.12),
-        0 30px 80px rgba(124, 92, 252, 0.22);
+      box-shadow: 0 0 0 1px rgba(100, 240, 255, 0.1), 0 30px 80px rgba(100, 240, 255, 0.14);
+      transition: transform 0.5s var(--jelly);
     }
+    .hero-video:hover { transform: scale(1.015); }
     .hero-video video {
       display: block;
       width: 100%;
@@ -235,11 +286,13 @@
     }
     .feature {
       padding: 22px 20px;
-      border-radius: 20px;
-      border: 1px solid var(--line);
-      background: var(--panel);
-      backdrop-filter: blur(16px);
+      border-radius: 22px;
       text-align: left;
+      transition: transform 0.5s var(--jelly), box-shadow 0.25s ease;
+    }
+    .feature:hover {
+      transform: translateY(-8px) scale(1.03);
+      box-shadow: 0 18px 40px rgba(100, 240, 255, 0.12);
     }
     .feature .mark {
       width: 36px;
@@ -248,8 +301,8 @@
       display: grid;
       place-items: center;
       margin-bottom: 14px;
-      background: rgba(124, 92, 252, 0.16);
-      color: var(--purple-soft);
+      background: rgba(100, 240, 255, 0.12);
+      color: var(--cyan);
       font-weight: 800;
     }
     .feature h3 { font-size: 16px; margin-bottom: 8px; }
@@ -259,7 +312,7 @@
       margin: 0 auto;
       padding: 0 0 96px;
     }
-    .changelog h2, .features-title {
+    .changelog h2 {
       font-size: 12px;
       letter-spacing: 0.22em;
       color: var(--muted);
@@ -268,13 +321,12 @@
     }
     .card {
       position: relative;
-      background: var(--panel);
-      border: 1px solid var(--line);
       border-radius: 18px;
       padding: 22px 24px 22px 28px;
       margin-bottom: 12px;
-      backdrop-filter: blur(16px);
+      transition: transform 0.45s var(--jelly);
     }
+    .card:hover { transform: scale(1.02); }
     .card::before {
       content: "";
       position: absolute;
@@ -283,7 +335,7 @@
       bottom: 16px;
       width: 3px;
       border-radius: 99px;
-      background: linear-gradient(180deg, var(--purple), transparent);
+      background: linear-gradient(180deg, var(--cyan), transparent);
     }
     .card h3 { font-size: 20px; margin-bottom: 10px; }
     .card .tag {
@@ -291,17 +343,17 @@
       font-size: 10px;
       font-weight: 700;
       letter-spacing: 0.1em;
-      color: var(--purple-soft);
-      border: 1px solid rgba(124, 92, 252, 0.4);
+      color: var(--cyan);
+      border: 1px solid rgba(100, 240, 255, 0.35);
       border-radius: 999px;
       padding: 3px 8px;
       margin-left: 8px;
       vertical-align: middle;
     }
     .card .tag.update {
-      color: #fff;
-      background: var(--purple);
-      border-color: var(--purple);
+      color: #041018;
+      background: linear-gradient(135deg, var(--cyan), var(--violet));
+      border-color: transparent;
     }
     .card ul {
       padding-left: 18px;
@@ -321,21 +373,28 @@
       position: fixed;
       inset: 0;
       z-index: 80;
-      background: rgba(0, 0, 0, 0.66);
+      background: rgba(4, 8, 16, 0.62);
       align-items: center;
       justify-content: center;
       padding: 24px;
-      backdrop-filter: blur(8px);
+      backdrop-filter: blur(14px);
     }
     .modal-bg.open { display: flex; }
     .modal {
       width: min(440px, 100%);
-      background: var(--panel-solid);
+      background: rgba(11, 18, 32, 0.86);
       border: 1px solid var(--line);
-      border-radius: 20px;
+      border-radius: 22px;
       padding: 24px;
       text-align: left;
-      box-shadow: 0 24px 80px rgba(124, 92, 252, 0.18);
+      box-shadow: 0 24px 80px rgba(100, 240, 255, 0.12);
+      backdrop-filter: blur(24px);
+      animation: jelly-in 0.5s var(--jelly);
+    }
+    @keyframes jelly-in {
+      from { transform: scale(0.86); opacity: 0; }
+      60% { transform: scale(1.04); }
+      to { transform: scale(1); opacity: 1; }
     }
     .modal h3 { font-size: 22px; margin-bottom: 6px; }
     .modal .hint { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
@@ -351,7 +410,7 @@
       padding: 11px 12px;
       border-radius: 12px;
       border: 1px solid var(--line);
-      background: #0c0c12;
+      background: rgba(5, 10, 20, 0.7);
       color: var(--text);
       font-family: inherit;
       font-size: 14px;
@@ -367,30 +426,27 @@
       padding: 10px 16px;
       border-radius: 999px;
       border: 1px solid var(--line);
-      background: #121218;
+      background: #0c1422;
       color: var(--text);
       font-weight: 700;
       font-family: inherit;
-      cursor: pointer;
+      transition: transform 0.4s var(--jelly);
     }
+    .modal-actions button:hover { transform: scale(1.08); }
     .modal-actions .send {
-      background: linear-gradient(180deg, #9174ff, var(--purple));
+      background: linear-gradient(135deg, var(--cyan), var(--violet));
       border-color: transparent;
-      color: #fff;
+      color: #041018;
     }
-    .modal-actions .send:disabled { opacity: 0.55; cursor: not-allowed; }
+    .modal-actions .send:disabled { opacity: 0.55; }
     #review-status {
       min-height: 18px;
       font-size: 13px;
-      color: var(--purple-soft);
+      color: var(--cyan);
       margin-bottom: 8px;
     }
     @media (max-width: 860px) {
-      .top {
-        flex-wrap: wrap;
-        border-radius: 22px;
-        justify-content: center;
-      }
+      .top { flex-wrap: wrap; border-radius: 22px; }
       .features { grid-template-columns: 1fr 1fr; }
       .hero h1 { font-size: 64px; }
     }
@@ -400,9 +456,11 @@
   </style>
 </head>
 <body>
+  <div class="jelly-cursor" id="jelly-cursor"></div>
+  <div class="jelly-dot" id="jelly-dot"></div>
   <div class="aurora"></div>
   <div class="wrap">
-    <header class="top">
+    <header class="top glass">
       <a class="brand" href="#">
         <img src="icon.png" alt="SolaX" />
         SOLAX
@@ -411,6 +469,7 @@
         <a class="download" href="https://github.com/SisoSeller/solax/releases/latest/download/SolaX-Setup.exe" download="SolaX-Setup.exe">Download</a>
         <button type="button" class="review" id="review-open">Review</button>
         <a class="discord" href="https://discord.gg/zq3fR5MxgU" target="_blank" rel="noopener">Discord</a>
+        <button type="button" class="sound-btn" id="sound-toggle" aria-label="Suoni">♪</button>
       </div>
     </header>
 
@@ -429,7 +488,7 @@
       <div class="hero-cta">
         <a class="download" href="https://github.com/SisoSeller/solax/releases/latest/download/SolaX-Setup.exe" download="SolaX-Setup.exe">Scarica SolaX-Setup.exe</a>
       </div>
-      <div class="hero-video">
+      <div class="hero-video glass">
         <video controls playsinline preload="metadata">
           <source src="solax.mp4" type="video/mp4" />
         </video>
@@ -437,22 +496,22 @@
     </section>
 
     <section class="features">
-      <article class="feature">
+      <article class="feature glass">
         <div class="mark">Aa</div>
         <h3>Font</h3>
         <p>Sostituisci il font delle scritte nel client. Solo tu lo vedi.</p>
       </article>
-      <article class="feature">
+      <article class="feature glass">
         <div class="mark">F</div>
         <h3>FastFlag</h3>
         <p>Editor e switch: FPS, renderer, DPI. Si applicano all’avvio.</p>
       </article>
-      <article class="feature">
+      <article class="feature glass">
         <div class="mark">G</div>
         <h3>Graphics</h3>
         <p>Togli post, ombre, texture e particelle se vuoi più fluidità.</p>
       </article>
-      <article class="feature">
+      <article class="feature glass">
         <div class="mark">K</div>
         <h3>Korblox</h3>
         <p>Mesh della gamba destra, inclusa nel setup, solo sul tuo client.</p>
@@ -462,7 +521,7 @@
     <section class="changelog" id="changelog">
       <h2>Changelog</h2>
 
-      <article class="card">
+      <article class="card glass">
         <h3>1.0.0 <span class="tag">Beta Release</span></h3>
         <ul>
           <li>Prima versione di SolaX</li>
@@ -473,7 +532,7 @@
         </ul>
       </article>
 
-      <article class="card">
+      <article class="card glass">
         <h3>1.0.7 <span class="tag">Official Release</span></h3>
         <ul>
           <li>Korblox: sostituisce la mesh della gamba destra, inclusa nell’exe</li>
@@ -485,7 +544,7 @@
         </ul>
       </article>
 
-      <article class="card">
+      <article class="card glass">
         <h3>1.1.0 <span class="tag">Official Release</span></h3>
         <ul>
           <li>Korblox: cancella la gamba vecchia e poi mette la mesh nuova</li>
@@ -496,14 +555,14 @@
         </ul>
       </article>
 
-      <article class="card">
+      <article class="card glass">
         <h3>1.1.1 <span class="tag">Official Release</span></h3>
         <ul>
           <li>Plugin ALL DAY: cielo sempre giorno sul tuo client</li>
         </ul>
       </article>
 
-      <article class="card">
+      <article class="card glass">
         <h3>1.1.2 <span class="tag">Official Release</span></h3>
         <ul>
           <li>ALL DAY è dentro SolaX.exe, senza download a parte</li>
@@ -511,14 +570,14 @@
         </ul>
       </article>
 
-      <article class="card">
+      <article class="card glass">
         <h3>1.1.3 <span class="tag">Official Release</span></h3>
         <ul>
           <li>Download: SolaX-Setup.exe installa tutti i file, senza errori di pezzi mancanti</li>
         </ul>
       </article>
 
-      <article class="card">
+      <article class="card glass">
         <h3>1.1.4 <span class="tag">Official Release</span></h3>
         <ul>
           <li>Tolti Custom sky e Shift lock PNG dall’app</li>
@@ -527,7 +586,7 @@
         </ul>
       </article>
 
-      <article class="card">
+      <article class="card glass">
         <h3>1.1.5 <span class="tag">Official Release</span></h3>
         <ul>
           <li>Shader sotto Plugin: Glow e Reflection, si applicano all’avvio</li>
@@ -535,7 +594,7 @@
         </ul>
       </article>
 
-      <article class="card">
+      <article class="card glass">
         <h3>1.1.6 <span class="tag">Official Release</span></h3>
         <ul>
           <li>Tolti Plugin e Shader dall’app</li>
@@ -543,10 +602,18 @@
         </ul>
       </article>
 
-      <article class="card">
-        <h3>1.1.7 <span class="tag update">UPDATE</span></h3>
+      <article class="card glass">
+        <h3>1.1.7 <span class="tag">Official Release</span></h3>
         <ul>
           <li>Nuovo look del sito e dell’app</li>
+        </ul>
+      </article>
+
+      <article class="card glass">
+        <h3>1.1.8 <span class="tag update">UPDATE</span></h3>
+        <ul>
+          <li>UI glass, blur e colori più futuristici su sito e app</li>
+          <li>Cursore jelly e suoni sull’interfaccia</li>
         </ul>
       </article>
     </section>
@@ -631,7 +698,7 @@
           embeds: [{
             title: "Nuova review",
             description: text,
-            color: 0x7c5cfc,
+            color: 0x64f0ff,
             fields: [{ name: "Da", value: name, inline: true }],
             timestamp: new Date().toISOString()
           }]
@@ -649,6 +716,111 @@
             sendBtn.disabled = false;
             setStatus("Invio non riuscito. Riprova.");
           });
+      });
+
+      var fine = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+      if (fine) document.documentElement.classList.add("fine-pointer");
+
+      var blob = document.getElementById("jelly-cursor");
+      var dot = document.getElementById("jelly-dot");
+      var tx = window.innerWidth / 2;
+      var ty = 120;
+      var x = tx;
+      var y = ty;
+      var vx = 0;
+      var vy = 0;
+      var scale = 1;
+      var vScale = 0;
+      var targetScale = 1;
+
+      window.addEventListener("pointermove", function (e) {
+        tx = e.clientX;
+        ty = e.clientY;
+      }, { passive: true });
+      window.addEventListener("pointerdown", function () {
+        targetScale = 0.72;
+        jelly(240, 0.12);
+      });
+      window.addEventListener("pointerup", function () { targetScale = 1; });
+
+      function tick() {
+        var dx = tx - x;
+        var dy = ty - y;
+        vx += dx * 0.22;
+        vy += dy * 0.22;
+        vx *= 0.68;
+        vy *= 0.68;
+        x += vx;
+        y += vy;
+        vScale += (targetScale - scale) * 0.28;
+        vScale *= 0.62;
+        scale += vScale;
+        if (blob) blob.style.transform = "translate(" + x + "px," + y + "px) scale(" + scale + ")";
+        if (dot) dot.style.transform = "translate(" + tx + "px," + ty + "px)";
+        requestAnimationFrame(tick);
+      }
+      if (fine) requestAnimationFrame(tick);
+
+      document.querySelectorAll("a, button, .chip, .feature, .card, .download, .review").forEach(function (el) {
+        el.addEventListener("pointerenter", function () {
+          targetScale = 1.55;
+          jelly(720, 0.07);
+        });
+        el.addEventListener("pointerleave", function () { targetScale = 1; });
+      });
+
+      var audioCtx = null;
+      var soundOn = localStorage.getItem("solax_sound") !== "off";
+      var lastHover = 0;
+      var soundBtn = document.getElementById("sound-toggle");
+      function syncSound() {
+        soundBtn.textContent = soundOn ? "♪" : "×";
+        soundBtn.setAttribute("aria-label", soundOn ? "Suoni accesi" : "Suoni spenti");
+      }
+      syncSound();
+      function ensureAudio() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === "suspended") audioCtx.resume();
+      }
+      function jelly(freq, dur) {
+        if (!soundOn) return;
+        try {
+          ensureAudio();
+          var t = audioCtx.currentTime;
+          var o = audioCtx.createOscillator();
+          var o2 = audioCtx.createOscillator();
+          var g = audioCtx.createGain();
+          o.type = "sine";
+          o2.type = "triangle";
+          o.frequency.setValueAtTime(freq, t);
+          o.frequency.exponentialRampToValueAtTime(Math.max(80, freq * 0.45), t + dur);
+          o2.frequency.setValueAtTime(freq * 1.6, t);
+          o2.frequency.exponentialRampToValueAtTime(Math.max(90, freq * 0.7), t + dur);
+          g.gain.setValueAtTime(0.07, t);
+          g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+          o.connect(g);
+          o2.connect(g);
+          g.connect(audioCtx.destination);
+          o.start(t);
+          o2.start(t);
+          o.stop(t + dur + 0.02);
+          o2.stop(t + dur + 0.02);
+        } catch (e) {}
+      }
+      soundBtn.addEventListener("click", function () {
+        soundOn = !soundOn;
+        localStorage.setItem("solax_sound", soundOn ? "on" : "off");
+        syncSound();
+        if (soundOn) jelly(520, 0.1);
+      });
+      document.addEventListener("pointerdown", function () { ensureAudio(); }, { once: true });
+      document.querySelectorAll("a, button, .chip, .feature").forEach(function (el) {
+        el.addEventListener("pointerenter", function () {
+          var now = Date.now();
+          if (now - lastHover < 70) return;
+          lastHover = now;
+          jelly(640 + Math.random() * 80, 0.08);
+        });
       });
     })();
   </script>

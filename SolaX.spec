@@ -7,6 +7,9 @@ hiddenimports = ['PIL._tkinter_finder', 'roblox_fonts', 'roblox_flags', 'roblox_
 tmp_ret = collect_all('customtkinter')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 datas += [('assets/rightleg.mesh', 'assets')]
+datas += [('assets/cursor.cur', 'assets')]
+datas += [('assets/click.wav', 'assets')]
+datas += [('assets/hover.wav', 'assets')]
 datas += [('website/index.html', 'website')]
 datas += [('website/icon.png', 'website')]
 datas += [('website/icon.ico', 'website')]

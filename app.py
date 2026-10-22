@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import ctypes
+import shutil
 import sys
 import threading
 import time
 import webbrowser
+import winsound
 from pathlib import Path
 from tkinter import filedialog, font as tkfont, messagebox
 from PIL import Image, ImageTk
@@ -18,26 +20,62 @@ import roblox_headless as rh
 import roblox_korblox as rk
 import roblox_mods as rm
 
-VERSION = "1.1.7"
+VERSION = "1.1.8"
 FR_PRIVATE = 0x10
 
-BG = "#0b0b10"
-SURFACE = "#14141c"
-SURFACE_HOVER = "#1c1c28"
-INPUT = "#101018"
-BORDER = "#2c2c3a"
-TEXT = "#f5f5fa"
-MUTED = "#8e8ea0"
-PURPLE = "#c4b5fd"
-PURPLE_BTN = "#7c5cfc"
-PURPLE_BTN_HOVER = "#9174ff"
-FOOTER_BG = "#08080c"
-NAV_ACTIVE = "#1b1530"
-SWITCH_OFF = "#2e2e3c"
+BG = "#05070e"
+SURFACE = "#0c1220"
+SURFACE_HOVER = "#152038"
+INPUT = "#080e18"
+BORDER = "#243044"
+TEXT = "#eef4ff"
+MUTED = "#8b97b0"
+PURPLE = "#64f0ff"
+PURPLE_BTN = "#4f6dff"
+PURPLE_BTN_HOVER = "#6a86ff"
+FOOTER_BG = "#03050a"
+NAV_ACTIVE = "#121a32"
+SWITCH_OFF = "#1a2438"
+UI_CURSOR = "arrow"
 HOME_SIZE = "620x400"
 HOME_MIN = (560, 360)
 SETTINGS_SIZE = "1080x760"
 SETTINGS_MIN = (900, 620)
+
+
+def play_ui(kind: str) -> None:
+    try:
+        path = resource_path("assets", f"{kind}.wav")
+        if path.is_file():
+            winsound.PlaySound(
+                str(path),
+                winsound.SND_FILENAME | winsound.SND_ASYNC | winsound.SND_NODEFAULT,
+            )
+    except Exception:
+        pass
+
+
+def cursor_spec() -> str:
+    src = resource_path("assets", "cursor.cur")
+    if not src.is_file():
+        return "arrow"
+    dest = rf.app_data_dir() / "cursor.cur"
+    try:
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        if not dest.is_file() or dest.stat().st_size != src.stat().st_size:
+            shutil.copy2(src, dest)
+        return "@" + str(dest)
+    except Exception:
+        return "arrow"
+
+
+def apply_cursor(widget, spec: str) -> None:
+    try:
+        widget.configure(cursor=spec)
+    except Exception:
+        pass
+    for child in widget.winfo_children():
+        apply_cursor(child, spec)
 
 
 def resource_path(*parts: str) -> Path:
@@ -100,7 +138,7 @@ class MenuTile(ctk.CTkFrame):
             border_width=0 if primary else 1,
             border_color=BORDER,
             height=height,
-            cursor="hand2",
+            cursor=UI_CURSOR,
         )
         self._command = command
         self._primary = primary
@@ -109,7 +147,7 @@ class MenuTile(ctk.CTkFrame):
         inner = ctk.CTkFrame(self, fg_color="transparent")
         inner.pack(fill="both", expand=True, padx=16, pady=10)
         icon_color = TEXT if primary else PURPLE
-        muted = "#e8e0ff" if primary else MUTED
+        muted = "#d7f8ff" if primary else MUTED
 
         ctk.CTkLabel(
             inner,
@@ -161,6 +199,7 @@ class MenuTile(ctk.CTkFrame):
         return False
 
     def _on_enter(self, _event=None):
+        play_ui("hover")
         self.configure(fg_color=PURPLE_BTN_HOVER if self._primary else SURFACE_HOVER)
 
     def _on_leave(self, _event=None):
@@ -168,13 +207,14 @@ class MenuTile(ctk.CTkFrame):
             self.configure(fg_color=PURPLE_BTN if self._primary else SURFACE)
 
     def _on_click(self, _event=None):
+        play_ui("click")
         if self._command:
             self._command()
 
 
 class SidebarItem(ctk.CTkFrame):
     def __init__(self, master, icon: str, title: str, command, selected: bool = False):
-        super().__init__(master, fg_color="transparent", height=42, cursor="hand2")
+        super().__init__(master, fg_color="transparent", height=42, cursor=UI_CURSOR)
         self._command = command
         self._selected = selected
         self.pack_propagate(False)
@@ -205,9 +245,15 @@ class SidebarItem(ctk.CTkFrame):
         self.set_selected(selected)
         bind_all(self, "<Enter>", self._on_enter)
         bind_all(self, "<Leave>", self._on_leave)
-        bind_all(self, "<Button-1>", lambda _e: self._command())
+        bind_all(self, "<Button-1>", self._activate)
+
+    def _activate(self, _event=None):
+        play_ui("click")
+        if self._command:
+            self._command()
 
     def _on_enter(self, _event=None):
+        play_ui("hover")
         if not self._selected:
             self.inner.configure(fg_color=SURFACE_HOVER)
 
@@ -227,11 +273,16 @@ class SidebarItem(ctk.CTkFrame):
 
 class FooterButton(ctk.CTkButton):
     def __init__(self, master, text: str, command, primary: bool = False, width: int = 130):
+        def wrapped():
+            play_ui("click")
+            if command:
+                command()
+
         if primary:
             super().__init__(
                 master,
                 text=text,
-                command=command,
+                command=wrapped,
                 width=width,
                 height=38,
                 corner_radius=12,
@@ -244,7 +295,7 @@ class FooterButton(ctk.CTkButton):
             super().__init__(
                 master,
                 text=text,
-                command=command,
+                command=wrapped,
                 width=width,
                 height=38,
                 corner_radius=12,
@@ -262,8 +313,10 @@ class App(ctk.CTk):
         super().__init__()
         self._auto_mode = auto
         ctk.set_appearance_mode("dark")
+        global UI_CURSOR
         self.title("SolaX")
-        self.configure(fg_color=BG)
+        UI_CURSOR = cursor_spec()
+        self.configure(fg_color=BG, cursor=UI_CURSOR)
         self.geometry(HOME_SIZE)
         self.minsize(*HOME_MIN)
         try:
@@ -327,6 +380,7 @@ class App(ctk.CTk):
         self.settings = ctk.CTkFrame(self, fg_color=BG)
         self._build_home()
         self._build_settings()
+        apply_cursor(self, UI_CURSOR)
         self._bind_persist()
         self.protocol("WM_DELETE_WINDOW", self._on_close)
         self._ready = True
@@ -416,7 +470,7 @@ class App(ctk.CTk):
 
         links = ctk.CTkFrame(card, fg_color="transparent")
         links.pack(side="bottom", fill="x", padx=22, pady=(0, 16))
-        web_row = ctk.CTkFrame(links, fg_color="transparent", cursor="hand2")
+        web_row = ctk.CTkFrame(links, fg_color="transparent", cursor=UI_CURSOR)
         web_row.pack(side="left")
         ctk.CTkLabel(
             web_row,
@@ -424,7 +478,7 @@ class App(ctk.CTk):
             font=ctk.CTkFont(family=icon_family(), size=12),
             text_color=PURPLE,
             width=18,
-            cursor="hand2",
+            cursor=UI_CURSOR,
         ).pack(side="left")
         ctk.CTkLabel(
             web_row,
@@ -432,10 +486,10 @@ class App(ctk.CTk):
             font=ctk.CTkFont(family="Segoe UI", size=12),
             text_color=PURPLE,
             anchor="w",
-            cursor="hand2",
+            cursor=UI_CURSOR,
         ).pack(side="left")
         bind_all(web_row, "<Button-1>", lambda _e: self._open_website())
-        about_row = ctk.CTkFrame(links, fg_color="transparent", cursor="hand2")
+        about_row = ctk.CTkFrame(links, fg_color="transparent", cursor=UI_CURSOR)
         about_row.pack(side="left", padx=(18, 0))
         ctk.CTkLabel(
             about_row,
@@ -443,7 +497,7 @@ class App(ctk.CTk):
             font=ctk.CTkFont(family=icon_family(), size=12),
             text_color=PURPLE,
             width=18,
-            cursor="hand2",
+            cursor=UI_CURSOR,
         ).pack(side="left")
         ctk.CTkLabel(
             about_row,
@@ -451,7 +505,7 @@ class App(ctk.CTk):
             font=ctk.CTkFont(family="Segoe UI", size=12),
             text_color=PURPLE,
             anchor="w",
-            cursor="hand2",
+            cursor=UI_CURSOR,
         ).pack(side="left")
         bind_all(about_row, "<Button-1>", lambda _e: self._about())
 
@@ -459,7 +513,7 @@ class App(ctk.CTk):
         body = ctk.CTkFrame(self.settings, fg_color=BG)
         body.pack(fill="both", expand=True)
 
-        sidebar = ctk.CTkFrame(body, fg_color="#09090e", width=228)
+        sidebar = ctk.CTkFrame(body, fg_color="#070b14", width=228)
         sidebar.pack(side="left", fill="y")
         sidebar.pack_propagate(False)
 
@@ -820,6 +874,7 @@ class App(ctk.CTk):
                 text_color=MUTED,
                 font=ctk.CTkFont(family="Segoe UI", size=12),
             ).pack(pady=14)
+            apply_cursor(self.flag_list, UI_CURSOR)
             return
         for name in sorted(self.custom_flags):
             value = self.custom_flags[name]
@@ -841,6 +896,7 @@ class App(ctk.CTk):
                 anchor="e",
             ).pack(side="left", padx=(8, 8))
             FooterButton(row, "Remove", lambda n=name: self._remove_custom_flag(n), width=80).pack(side="right")
+        apply_cursor(self.flag_list, UI_CURSOR)
 
     def _build_software(self, parent):
         self._page_header(
@@ -1126,6 +1182,7 @@ class App(ctk.CTk):
                 text_color=MUTED,
                 font=ctk.CTkFont(family="Segoe UI", size=13),
             ).pack(pady=16)
+        apply_cursor(self.font_list, UI_CURSOR)
 
     def _add_font_row(self, name: str, path: Path):
         selected = self.selected_font is not None and Path(self.selected_font) == Path(path)
@@ -1133,7 +1190,7 @@ class App(ctk.CTk):
             self.font_list,
             fg_color=NAV_ACTIVE if selected else "transparent",
             corner_radius=6,
-            cursor="hand2",
+            cursor=UI_CURSOR,
         )
         try:
             row_font = ctk.CTkFont(family=name, size=17)
@@ -1149,6 +1206,7 @@ class App(ctk.CTk):
         label.pack(fill="x", padx=12, pady=8)
 
         def select(_event=None, family=name, font_path=path):
+            play_ui("click")
             self._select_font(family, font_path)
 
         bind_all(row, "<Button-1>", select)
