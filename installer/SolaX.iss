@@ -1,5 +1,5 @@
 #define MyAppName "SolaX"
-#define MyAppVersion "1.1.9"
+#define MyAppVersion "1.1.10"
 #define MyAppPublisher "KAPPA"
 #define MyAppURL "https://sisoseller.github.io/solax/"
 #define MyAppExeName "SolaX.exe"

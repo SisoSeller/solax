@@ -20,7 +20,7 @@ import roblox_headless as rh
 import roblox_korblox as rk
 import roblox_mods as rm
 
-VERSION = "1.1.9"
+VERSION = "1.1.10"
 FR_PRIVATE = 0x10
 
 BG = "#05070e"
@@ -62,9 +62,9 @@ def cursor_spec() -> str:
     dest = rf.app_data_dir() / "cursor.cur"
     try:
         dest.parent.mkdir(parents=True, exist_ok=True)
-        if not dest.is_file() or dest.stat().st_size != src.stat().st_size:
-            shutil.copy2(src, dest)
-        return "@" + str(dest)
+        shutil.copy2(src, dest)
+        # Tcl treats \ as escapes (\Users → bad spec). POSIX slashes are required.
+        return "@" + dest.resolve().as_posix()
     except Exception:
         return "arrow"
 
@@ -316,7 +316,16 @@ class App(ctk.CTk):
         global UI_CURSOR
         self.title("SolaX")
         UI_CURSOR = cursor_spec()
-        self.configure(fg_color=BG, cursor=UI_CURSOR)
+        self.configure(fg_color=BG)
+        if UI_CURSOR != "arrow":
+            try:
+                self.configure(cursor=UI_CURSOR)
+            except Exception:
+                UI_CURSOR = "arrow"
+                try:
+                    self.configure(cursor="arrow")
+                except Exception:
+                    pass
         self.geometry(HOME_SIZE)
         self.minsize(*HOME_MIN)
         try:
