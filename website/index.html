@@ -44,22 +44,22 @@
     html.fine-pointer .jelly-cursor,
     html.fine-pointer .jelly-dot { display: block; }
     .jelly-cursor {
-      width: 44px;
-      height: 44px;
-      margin: -22px 0 0 -22px;
+      width: 14px;
+      height: 14px;
+      margin: -7px 0 0 -7px;
       border-radius: 50%;
-      background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.55), rgba(100,240,255,0.12) 42%, rgba(109,123,255,0.08) 70%, transparent 72%);
-      border: 1.5px solid rgba(180, 250, 255, 0.7);
-      box-shadow: 0 0 22px var(--glow), inset 0 0 12px rgba(100, 240, 255, 0.25);
-      backdrop-filter: blur(6px);
+      background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.7), rgba(100,240,255,0.18) 50%, transparent 72%);
+      border: 1px solid rgba(180, 250, 255, 0.85);
+      box-shadow: 0 0 8px var(--glow), inset 0 0 4px rgba(100, 240, 255, 0.3);
+      backdrop-filter: blur(3px);
     }
     .jelly-dot {
-      width: 8px;
-      height: 8px;
-      margin: -4px 0 0 -4px;
+      width: 3px;
+      height: 3px;
+      margin: -1.5px 0 0 -1.5px;
       border-radius: 50%;
       background: #fff;
-      box-shadow: 0 0 10px var(--cyan);
+      box-shadow: 0 0 5px var(--cyan);
     }
     .aurora {
       pointer-events: none;
@@ -610,10 +610,17 @@
       </article>
 
       <article class="card glass">
-        <h3>1.1.8 <span class="tag update">UPDATE</span></h3>
+        <h3>1.1.8 <span class="tag">Official Release</span></h3>
         <ul>
           <li>UI glass, blur e colori più futuristici su sito e app</li>
           <li>Cursore jelly e suoni sull’interfaccia</li>
+        </ul>
+      </article>
+
+      <article class="card glass">
+        <h3>1.1.9 <span class="tag update">UPDATE</span></h3>
+        <ul>
+          <li>Cursore molto più piccolo su sito e app</li>
         </ul>
       </article>
     </section>
@@ -738,7 +745,7 @@
         ty = e.clientY;
       }, { passive: true });
       window.addEventListener("pointerdown", function () {
-        targetScale = 0.72;
+        targetScale = 0.78;
         jelly(240, 0.12);
       });
       window.addEventListener("pointerup", function () { targetScale = 1; });
@@ -763,7 +770,7 @@
 
       document.querySelectorAll("a, button, .chip, .feature, .card, .download, .review").forEach(function (el) {
         el.addEventListener("pointerenter", function () {
-          targetScale = 1.55;
+          targetScale = 1.2;
           jelly(720, 0.07);
         });
         el.addEventListener("pointerleave", function () { targetScale = 1; });

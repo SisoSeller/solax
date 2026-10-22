@@ -20,7 +20,7 @@ import roblox_headless as rh
 import roblox_korblox as rk
 import roblox_mods as rm
 
-VERSION = "1.1.8"
+VERSION = "1.1.9"
 FR_PRIVATE = 0x10
 
 BG = "#05070e"
